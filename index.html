@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Maqueta 3D · Migración sistema de control · Planta de agua · FPS</title>
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/hud.css">
+<link rel="stylesheet" href="css/fps.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+</head>
+<body>
+<div id="app">
+  <div id="stage">
+    <div id="hud-top">
+      <div class="brand"><span class="dot"></span> Maqueta 3D · Planta de agua</div>
+      <div class="presets" id="presets"></div>
+    </div>
+    
+    <div id="sidebar" data-gen>
+      <div class="sb-head">Cómputo métrico · <span id="sb-count">0</span> ítems</div>
+      <div id="sb-list"></div>
+    </div>
+
+    <div id="info" data-gen>
+      <div class="i-tag" id="i-tag">Selecciona un objeto</div>
+      <div class="i-desc" id="i-desc">Toca un equipo para ver su información.</div>
+      <div class="i-meta" id="i-meta"></div>
+      <div id="i-doc"></div>
+    </div>
+
+    <div id="legend">
+      <span><i style="background:#22c55e"></i>Verificado</span>
+      <span><i style="background:#f59e0b"></i>Parcial</span>
+      <span><i style="background:#ef4444"></i>Faltante</span>
+      <span><i style="background:#38bdf8"></i>Selección</span>
+    </div>
+
+    <div id="toggles"></div>
+
+    <!-- Panel de Instrumentación -->
+    <div id="instr-panel" style="display:none; position:absolute; right:8px; top:62px; width:280px; max-height:400px; overflow-y:auto; background:rgba(8,12,20,.95); border:1px solid rgba(148,163,184,.22); border-radius:8px; padding:10px; z-index:4; font-size:10px; color:#cbd5e1;">
+      <div style="font-weight:bold; color:#7dd3fc; margin-bottom:8px; display:flex; justify-content:space-between;">
+        <span>📋 Instrumentación</span>
+        <span style="cursor:pointer; color:#ef4444;" onclick="document.getElementById('instr-panel').style.display='none'">✖</span>
+      </div>
+      <div id="instr-content"></div>
+    </div>
+
+    <div id="crosshair"><div class="dot"></div></div>
+    <div id="fps-bar"></div>
+    <div id="fps-help" class="visible">
+      <span>Joystick: Moverse</span>
+      <span class="sep">·</span>
+      <span>Arrastrar: Mirar</span>
+      <span class="sep">·</span>
+      <span>Botón: Viajar</span>
+    </div>
+
+    <!-- NUEVOS CONTROLES TÁCTILES FPS -->
+    <div id="touch-controls" style="display:none;">
+      <div id="joystick-zone">
+        <div id="joystick-base">
+          <div id="joystick-knob"></div>
+        </div>
+      </div>
+      <button id="btn-action">📸</button>
+    </div>
+
+    <div id="play-overlay">
+      <div class="card">
+        <h2>Modo Primera Persona</h2>
+        <p>Toca para entrar</p>
+      </div>
+    </div>
+
+    <div id="teleport-menu">
+      <h3>Viaje Rápido</h3>
+      <div class="tp-grid" id="tp-grid"></div>
+    </div>
+
+    <div id="report" data-gen class="visible">
+      <div class="rp-head">Validación 3D <span id="rp-score" class="score">—</span></div>
+      <div class="rp-bar"><div id="rp-fill"></div></div>
+      <div id="rp-grid" class="rp-grid"></div>
+    </div>
+  </div>
+</div>
+
+<script src="js/bom.js"></script>
+<script src="js/engine.js"></script>
+<script src="js/builders.js"></script>
+<script src="js/interaction.js"></script>
+<script src="js/fps.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>>
