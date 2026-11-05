@@ -1,0 +1,20 @@
+:root{
+  --host-bg:#0b0f14; --host-fg:#e5e7eb; --host-fg-muted:#9ca3af;
+  --host-card:#111827; --host-card-fg:#e5e7eb; --host-border:#1f2937;
+  --host-muted:#1f2937; --host-primary:#0284c7;
+  --sky-4:#7dd3fc; --sky-5:#38bdf8;
+  --slate-8:#1e293b; --slate-6:#475569; --slate-4:#334155;
+  --panel:rgba(8,12,20,.92);
+  --panel-bd:1px solid rgba(148,163,184,.22);
+  --font:Inter,system-ui,sans-serif;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;background:var(--host-bg);color:var(--host-fg);overflow:hidden;}
+#app{width:100%;font-family:var(--font);color:var(--host-fg);}
+#stage{position:relative;width:100%;height:100vh;overflow:hidden;background:#0d1117;}
+#cv{display:block;width:100%;height:100%;}
+kbd{
+  background:var(--slate-8);border:1px solid var(--slate-6);
+  border-radius:3px;padding:1px 5px;font-family:monospace;
+  font-size:10px;color:var(--sky-4);margin:0 1px;
+}
