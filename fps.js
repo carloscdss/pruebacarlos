@@ -335,5 +335,3 @@ function colisiona(x, y, z){
   }
   return false;
 }
-  return false;
-}
