@@ -11,13 +11,17 @@ const player = {
 const fpsMode = { value: false };
 const keys = {};
 
-const crosshair  = document.getElementById('crosshair');
+const crosshair   = document.getElementById('crosshair');
 const fpsHelp    = document.getElementById('fps-help');
 const playOverlay= document.getElementById('play-overlay');
 const fpsBar     = document.getElementById('fps-bar');
 const teleportMenu = document.getElementById('teleport-menu');
-const fpsBtn     = document.getElementById('fps-btn');
 const touchControls = document.getElementById('touch-controls');
+
+// Declaración temprana del Raycaster para evitar errores de inicialización
+const fpsRay = new THREE.Raycaster();
+const centerNDC = new THREE.Vector2(0, 0);
+let hoveredId = null;
 
 // Variables del Joystick
 let joyX = 0, joyY = 0;
@@ -47,6 +51,7 @@ function setupColliders(RX0,RX1,RZ0,RZ1,RH){
 
 function buildTeleportMenu(cams){
   const grid = document.getElementById('tp-grid');
+  if(!grid) return;
   const TELEPORTS = [
     ['sala','Sala de Control'],['gab1','Gabinete N°1'],['gab2','Gabinete N°2'],
     ['campo','Panel de Campo'],['filtros','Filtros D-951'],
@@ -59,46 +64,55 @@ function entrarFPS(){
   fpsMode.value = true;
   controls.enabled = false;
   document.querySelectorAll('.presets button').forEach(b => b.classList.remove('on'));
-  document.getElementById('sidebar').style.display = 'none';
-  document.getElementById('info').style.display = 'none';
-  document.getElementById('report').classList.remove('visible');
-  crosshair.classList.add('visible');
-  fpsHelp.classList.add('visible');
-  fpsBar.classList.add('visible');
-  fpsBtn.classList.add('on');
-  fpsBtn.textContent = '🔓 Salir FPS';
-  fpsBtn.style.background = '#ef4444';
-  fpsBtn.style.borderColor = '#f87171';
   
-  touchControls.style.display = 'block'; // Mostrar joystick
+  const sidebar = document.getElementById('sidebar');
+  const info = document.getElementById('info');
+  const report = document.getElementById('report');
+  
+  if(sidebar) sidebar.style.display = 'none';
+  if(info) info.style.display = 'none';
+  if(report) report.classList.remove('visible');
+
+  if(crosshair) crosshair.classList.add('visible');
+  if(fpsHelp) fpsHelp.classList.add('visible');
+  if(fpsBar) fpsBar.classList.add('visible');
+  
+  if(touchControls) touchControls.style.display = 'block';
 
   player.pos.set(0, 1.7, 15);
   player.yaw = 0; player.pitch = 0;
   player.vel.set(0,0,0);
-  scene.fog.near = 30; scene.fog.far = 220;
-  playOverlay.classList.add('visible');
+  if(scene && scene.fog) {
+    scene.fog.near = 30; 
+    scene.fog.far = 220;
+  }
+  if(playOverlay) playOverlay.classList.add('visible');
 }
 
 function salirFPS(){
   fpsMode.value = false;
   controls.enabled = true;
-  crosshair.classList.remove('visible');
-  fpsHelp.classList.remove('visible');
-  fpsBar.classList.remove('visible');
-  playOverlay.classList.remove('visible');
-  teleportMenu.classList.remove('visible');
-  document.getElementById('sidebar').style.display = '';
-  document.getElementById('info').style.display = '';
-  document.getElementById('report').classList.add('visible');
-  fpsBtn.classList.remove('on');
-  fpsBtn.textContent = '🎮 Modo FPS';
-  fpsBtn.style.background = '';
-  fpsBtn.style.borderColor = '';
+  if(crosshair) crosshair.classList.remove('visible');
+  if(fpsHelp) fpsHelp.classList.remove('visible');
+  if(fpsBar) fpsBar.classList.remove('visible');
+  if(playOverlay) playOverlay.classList.remove('visible');
+  if(teleportMenu) teleportMenu.classList.remove('visible');
   
-  touchControls.style.display = 'none'; // Ocultar joystick
+  const sidebar = document.getElementById('sidebar');
+  const info = document.getElementById('info');
+  const report = document.getElementById('report');
 
-  scene.fog.near = 150; scene.fog.far = 340;
-  irA('overview');
+  if(sidebar) sidebar.style.display = '';
+  if(info) info.style.display = '';
+  if(report) report.classList.add('visible');
+  
+  if(touchControls) touchControls.style.display = 'none';
+
+  if(scene && scene.fog) {
+    scene.fog.near = 150; 
+    scene.fog.far = 340;
+  }
+  if(typeof irA === 'function') irA('overview');
 }
 
 // Controles teclado (PC)
@@ -106,14 +120,17 @@ document.addEventListener('keydown', e => {
   keys[e.code] = true;
   if(e.code === 'Escape' && fpsMode.value) salirFPS();
   if(e.code === 'KeyT' && fpsMode.value) viajarAObjetoAim();
-  if(e.code === 'KeyM' && fpsMode.value) teleportMenu.classList.toggle('visible');
+  if(e.code === 'KeyM' && fpsMode.value && teleportMenu) teleportMenu.classList.toggle('visible');
 });
 document.addEventListener('keyup', e => { keys[e.code] = false; });
 
-// Controles Mouse (Arrastrar para mirar en PC y Celular)
+// Controles Mouse
 let isDragging = false, lastMouseX = 0, lastMouseY = 0;
 const mouseSensitivity = 0.005;
-renderer.domElement.addEventListener('mousedown', e => { if(fpsMode.value) { isDragging = true; lastMouseX = e.clientX; lastMouseY = e.clientY; } });
+
+if(renderer && renderer.domElement) {
+  renderer.domElement.addEventListener('mousedown', e => { if(fpsMode.value) { isDragging = true; lastMouseX = e.clientX; lastMouseY = e.clientY; } });
+}
 document.addEventListener('mouseup', () => { isDragging = false; });
 document.addEventListener('mousemove', e => {
   if(!fpsMode.value || !isDragging) return;
@@ -125,30 +142,35 @@ document.addEventListener('mousemove', e => {
 
 // Soporte Táctil para mirar
 let lastTouchX = 0, lastTouchY = 0;
-renderer.domElement.addEventListener('touchstart', e => {
-  if(!fpsMode.value) return;
-  // Solo si no toca el joystick
-  if(e.target === renderer.domElement) {
-    lastTouchX = e.touches[0].clientX; lastTouchY = e.touches[0].clientY;
-  }
-}, {passive: false});
-renderer.domElement.addEventListener('touchmove', e => {
-  if(!fpsMode.value) return;
-  if(e.target === renderer.domElement) {
-    e.preventDefault(); // Evitar scroll
-    player.yaw -= (e.touches[0].clientX - lastTouchX) * 0.01;
-    player.pitch -= (e.touches[0].clientY - lastTouchY) * 0.01;
-    player.pitch = Math.max(-Math.PI/2 + 0.05, Math.min(Math.PI/2 - 0.05, player.pitch));
-    lastTouchX = e.touches[0].clientX; lastTouchY = e.touches[0].clientY;
-  }
-}, {passive: false});
+if(renderer && renderer.domElement) {
+  renderer.domElement.addEventListener('touchstart', e => {
+    if(!fpsMode.value) return;
+    if(e.target === renderer.domElement && e.touches.length > 0) {
+      lastTouchX = e.touches[0].clientX; lastTouchY = e.touches[0].clientY;
+    }
+  }, {passive: false});
+  
+  renderer.domElement.addEventListener('touchmove', e => {
+    if(!fpsMode.value) return;
+    if(e.target === renderer.domElement && e.touches.length > 0) {
+      e.preventDefault();
+      player.yaw -= (e.touches[0].clientX - lastTouchX) * 0.01;
+      player.pitch -= (e.touches[0].clientY - lastTouchY) * 0.01;
+      player.pitch = Math.max(-Math.PI/2 + 0.05, Math.min(Math.PI/2 - 0.05, player.pitch));
+      lastTouchX = e.touches[0].clientX; lastTouchY = e.touches[0].clientY;
+    }
+  }, {passive: false});
+}
 
 // Lógica del Joystick
-joyZone.addEventListener('touchstart', e => { e.preventDefault(); isDraggingJoy = true; updateJoy(e.touches[0]); }, {passive: false});
-joyZone.addEventListener('touchmove', e => { e.preventDefault(); if(isDraggingJoy) updateJoy(e.touches[0]); }, {passive: false});
-joyZone.addEventListener('touchend', e => { e.preventDefault(); isDraggingJoy = false; joyX = 0; joyY = 0; knob.style.transform = `translate(-50%, -50%)`; }, {passive: false});
+if(joyZone) {
+  joyZone.addEventListener('touchstart', e => { e.preventDefault(); isDraggingJoy = true; updateJoy(e.touches[0]); }, {passive: false});
+  joyZone.addEventListener('touchmove', e => { e.preventDefault(); if(isDraggingJoy && e.touches.length > 0) updateJoy(e.touches[0]); }, {passive: false});
+  joyZone.addEventListener('touchend', e => { e.preventDefault(); isDraggingJoy = false; joyX = 0; joyY = 0; if(knob) knob.style.transform = `translate(-50%, -50%)`; }, {passive: false});
+}
 
 function updateJoy(touch) {
+  if(!joyZone || !knob) return;
   const rect = joyZone.getBoundingClientRect();
   const centerX = rect.left + rect.width / 2;
   const centerY = rect.top + rect.height / 2;
@@ -165,16 +187,21 @@ function updateJoy(touch) {
   knob.style.transform = `translate(calc(-50% + ${joyX * maxDist * 0.8}px), calc(-50% + ${joyY * maxDist * 0.8}px))`;
 }
 
-// Botón de acción (Viajar / Inspeccionar)
-document.getElementById('btn-action').addEventListener('click', () => {
-  inspeccionarFPS();
-});
+// Botón de acción
+const btnAction = document.getElementById('btn-action');
+if(btnAction) {
+  btnAction.addEventListener('click', () => {
+    inspeccionarFPS();
+  });
+}
 
-playOverlay.addEventListener('click', () => { playOverlay.classList.remove('visible'); });
+if(playOverlay) {
+  playOverlay.addEventListener('click', () => { playOverlay.classList.remove('visible'); });
+}
 
 function irAEquipo(camKey, cams){
-  teleportMenu.classList.remove('visible');
-  if(!fpsMode.value) return;
+  if(teleportMenu) teleportMenu.classList.remove('visible');
+  if(!fpsMode.value || !cams || !cams[camKey]) return;
   const c = cams[camKey][1];
   let offset = new THREE.Vector3(0, 0, 5);
   if(camKey === 'sala') offset.set(0, 0, 6);
@@ -192,12 +219,8 @@ function irAEquipo(camKey, cams){
   player.pitch = -0.1;
 }
 
-const fpsRay = new THREE.Raycaster();
-const centerNDC = new THREE.Vector2(0, 0);
-let hoveredId = null;
-
 function viajarAObjetoAim(){
-  if(!hoveredId) return;
+  if(!hoveredId || typeof reg === 'undefined' || !reg[hoveredId]) return;
   const obj = reg[hoveredId][0];
   const caja = new THREE.Box3().setFromObject(obj);
   if(caja.isEmpty()) return;
@@ -213,11 +236,12 @@ function viajarAObjetoAim(){
 }
 
 function inspeccionarFPS(){
-  if(hoveredId) seleccionar(hoveredId);
-  else {
+  if(hoveredId && typeof seleccionar === 'function') {
+    seleccionar(hoveredId);
+  } else if(typeof pickables !== 'undefined' && typeof camera !== 'undefined') {
     fpsRay.setFromCamera(centerNDC, camera);
     const h = fpsRay.intersectObjects(pickables, false);
-    if(h.length) seleccionar(h[0].object.userData.renglon);
+    if(h.length && typeof seleccionar === 'function') seleccionar(h[0].object.userData.renglon);
   }
 }
 
@@ -226,13 +250,11 @@ function actualizarFPS(dt){
   const right = new THREE.Vector3(Math.cos(player.yaw), 0, -Math.sin(player.yaw));
   const wish = new THREE.Vector3();
   
-  // Teclado
   if(keys['KeyW'] || keys['ArrowUp']) wish.add(forward);
   if(keys['KeyS'] || keys['ArrowDown']) wish.sub(forward);
   if(keys['KeyD'] || keys['ArrowRight']) wish.add(right);
   if(keys['KeyA'] || keys['ArrowLeft']) wish.sub(right);
   
-  // Joystick (joyY va hacia abajo, por eso es positivo)
   if(joyY !== 0) wish.add(forward.clone().multiplyScalar(-joyY));
   if(joyX !== 0) wish.add(right.clone().multiplyScalar(joyX));
 
@@ -268,30 +290,38 @@ function actualizarFPS(dt){
 
   if(player.pos.y < player.height){ player.pos.y = player.height; player.vel.y = 0; player.onGround = true; }
 
-  camera.position.copy(player.pos);
-  const dir = new THREE.Vector3(
-    -Math.sin(player.yaw) * Math.cos(player.pitch),
-    Math.sin(player.pitch),
-    -Math.cos(player.yaw) * Math.cos(player.pitch)
-  );
-  camera.lookAt(player.pos.clone().add(dir));
+  if(typeof camera !== 'undefined') {
+    camera.position.copy(player.pos);
+    const dir = new THREE.Vector3(
+      -Math.sin(player.yaw) * Math.cos(player.pitch),
+      Math.sin(player.pitch),
+      -Math.cos(player.yaw) * Math.cos(player.pitch)
+    );
+    camera.lookAt(player.pos.clone().add(dir));
+  }
 
   const spd = Math.hypot(player.vel.x, player.vel.z);
-  fpsBar.style.transform = `scaleX(${Math.min(1, spd/9)})`;
+  if(fpsBar) fpsBar.style.transform = `scaleX(${Math.min(1, spd/9)})`;
 
-  fpsRay.setFromCamera(centerNDC, camera);
-  fpsRay.far = 10;
-  const h = fpsRay.intersectObjects(pickables, false);
-  hoveredId = h.length ? h[0].object.userData.renglon : null;
+  if(typeof camera !== 'undefined' && typeof pickables !== 'undefined' && pickables.length > 0) {
+    fpsRay.setFromCamera(centerNDC, camera);
+    fpsRay.far = 10;
+    const h = fpsRay.intersectObjects(pickables, false);
+    hoveredId = h.length ? h[0].object.userData.renglon : null;
 
-  if(hoveredId){
-    iTag.textContent = "Renglón " + hoveredId + "  [T] Viajar · [E] Inspeccionar";
-    iDesc.textContent = MAP[hoveredId].d;
-    iMeta.textContent = "Unidad: " + MAP[hoveredId].u + " · Cómputo: " + MAP[hoveredId].q;
-  } else {
-    iTag.textContent = 'Modo FPS';
-    iDesc.textContent = 'Mueve el joystick. Arrastra la pantalla para mirar.';
-    iMeta.textContent = '';
+    const iTag = document.getElementById('i-tag');
+    const iDesc = document.getElementById('i-desc');
+    const iMeta = document.getElementById('i-meta');
+
+    if(hoveredId && typeof MAP !== 'undefined' && MAP[hoveredId]){
+      if(iTag) iTag.textContent = "Renglón " + hoveredId + "  [T] Viajar · [E] Inspeccionar";
+      if(iDesc) iDesc.textContent = MAP[hoveredId].d;
+      if(iMeta) iMeta.textContent = "Unidad: " + MAP[hoveredId].u + " · Cómputo: " + MAP[hoveredId].q;
+    } else {
+      if(iTag) iTag.textContent = 'Modo FPS';
+      if(iDesc) iDesc.textContent = 'Mueve el joystick. Arrastra la pantalla para mirar.';
+      if(iMeta) iMeta.textContent = '';
+    }
   }
 }
 
