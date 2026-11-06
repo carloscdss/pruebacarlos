@@ -1,7 +1,5 @@
-// Declaración segura de variables y objetos globales del sistema FPS
 const FPS_FLOOR_Y = 0.06;
 const player = {
-  // pos.y es la altura de la cámara (ojos), no la altura de los pies.
   pos: new THREE.Vector3(0, FPS_FLOOR_Y + 1.64, 15),
   vel: new THREE.Vector3(),
   yaw: 0, pitch: 0,
@@ -14,7 +12,6 @@ const player = {
 const fpsMode = { value: false };
 const keys = {};
 
-// Instanciación anticipada del Raycaster para prevenir errores en el bucle
 const fpsRay = new THREE.Raycaster();
 const centerNDC = new THREE.Vector2(0, 0);
 let hoveredId = null;
@@ -26,7 +23,6 @@ const fpsBar     = document.getElementById('fps-bar');
 const teleportMenu = document.getElementById('teleport-menu');
 const touchControls = document.getElementById('touch-controls');
 
-// Variables del Joystick
 let joyX = 0, joyY = 0;
 let isDraggingJoy = false;
 const knob = document.getElementById('joystick-knob');
@@ -117,7 +113,6 @@ function salirFPS(){
   if(typeof irA === 'function') irA('overview');
 }
 
-// Control Teclado PC
 document.addEventListener('keydown', e => {
   keys[e.code] = true;
   if(e.code === 'Escape' && fpsMode.value) salirFPS();
@@ -126,7 +121,6 @@ document.addEventListener('keydown', e => {
 });
 document.addEventListener('keyup', e => { keys[e.code] = false; });
 
-// Control Mouse
 let isDragging = false, lastMouseX = 0, lastMouseY = 0;
 const mouseSensitivity = 0.005;
 
@@ -142,7 +136,6 @@ document.addEventListener('mousemove', e => {
   lastMouseX = e.clientX; lastMouseY = e.clientY;
 });
 
-// Soporte Táctil
 if(typeof renderer !== 'undefined' && renderer && renderer.domElement) {
   let lastTouchX = 0, lastTouchY = 0;
   renderer.domElement.addEventListener('touchstart', e => {
@@ -164,7 +157,6 @@ if(typeof renderer !== 'undefined' && renderer && renderer.domElement) {
   }, {passive: false});
 }
 
-// Joystick Táctil
 if(joyZone) {
   joyZone.addEventListener('touchstart', e => { e.preventDefault(); isDraggingJoy = true; updateJoy(e.touches[0]); }, {passive: false});
   joyZone.addEventListener('touchmove', e => { e.preventDefault(); if(isDraggingJoy && e.touches.length > 0) updateJoy(e.touches[0]); }, {passive: false});
@@ -331,7 +323,6 @@ function actualizarFPS(dt){
   }
 }
 
-// y representa la altura de los ojos; los pies del jugador están en y-height.
 function colisiona(x, y, z){
   const feet = y - player.height;
   const head = y;
@@ -342,5 +333,7 @@ function colisiona(x, y, z){
       return true;
     }
   }
+  return false;
+}
   return false;
 }
