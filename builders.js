@@ -34,7 +34,9 @@ function buildSala(){
   box(3.95,RH,0.26,M.pared,-3.05,RH/2+0.06,RZ1+0.13,sala);
   box(3.95,RH,0.26,M.pared, 3.05,RH/2+0.06,RZ1+0.13,sala);
   box(2.8,RH-2.2,0.26,M.pared,0,2.2+(RH-2.2)/2+0.06,RZ1+0.13,sala);
-  box(11,0.55,7,M.paredExt,0,0.4,25,sala);
+  
+  // ⚠️ ELIMINADO: El bloque que tapaba los muebles 
+  // box(11,0.55,7,M.paredExt,0,0.4,25,sala);
 
   const puertaG = grupo(0,0,RZ1+0.13);
   box(1.1,2.2,0.09,M.acero,0,1.16,0,puertaG);
@@ -175,40 +177,32 @@ function gabinete(x, tipo){
   const g = grupo(x,0,RZ0+0.58);
   const W=0.8, H=2.0, D=0.8;
   
-  // 1. Estructura hueca (Piso, Techo, Paredes Laterales y Fondo)
-  box(W+0.06,0.1,D+0.06,M.negro,0,0.08,0,g); // Base
-  box(W+0.05,0.12,D+0.05,M.gabinete,0,H+0.08,0,g); // Techo
-  box(0.04,H,D+0.04,M.gabinete,-W/2,H/2+0.14,0,g); // Pared Izq
-  box(0.04,H,D+0.04,M.gabinete, W/2,H/2+0.14,0,g); // Pared Der
-  box(W+0.04,H,0.04,M.gabinete,0,H/2+0.14,-D/2,g); // Placa de fondo
-
-  // Agregamos la etiqueta del renglón
+  box(W+0.06,0.1,D+0.06,M.negro,0,0.08,0,g); 
+  box(W+0.05,0.12,D+0.05,M.gabinete,0,H+0.08,0,g); 
+  box(0.04,H,D+0.04,M.gabinete,-W/2,H/2+0.14,0,g); 
+  box(0.04,H,D+0.04,M.gabinete, W/2,H/2+0.14,0,g); 
+  box(W+0.04,H,0.04,M.gabinete,0,H/2+0.14,-D/2,g); 
   tag(box(W-0.06,H-0.14,0.02,M.pintEp,0,H/2+0.14,-D/2+0.03,g), tipo==='a'?"5.1":"6.1"); 
   
   const p = rotulo("GABINETE N° "+(tipo==='a'?1:2), 0.44, 0.085);
   p.position.set(0,H+0.03,D/2+0.03); g.add(p); tag(p,"7.8");
 
-  // Luz interior
   const luz = new THREE.PointLight(0xeaf6ff,1.2,4.0,2);
   luz.position.set(0,H/2,0); g.add(luz);
 
-  // 3. Componentes internos (a media profundidad para que se vean bien)
   const zFrente = 0; 
 
   if(tipo === 'a'){
-    // PLC (Chasis)
     const y = 1.64;
     [y, y-0.62].forEach(yy => {
       tag(box(0.66,0.2,0.15,M.filtro,0,yy,zFrente,g),"5.8");
       for(let i=0;i<6;i++) box(0.09,0.17,0.1, i<2?M.azul:M.verde, -0.26+i*0.105, yy, zFrente+0.05, g);
     });
     
-    // CPU y Fuentes
     tag(box(0.1,0.19,0.1,M.negro,-0.3,y,zFrente,g),"5.11");
     tag(box(0.11,0.18,0.1,M.azul,-0.37,y-0.02,zFrente,g),"5.9");
     tag(box(0.09,0.14,0.1,M.acero,-0.3,y-0.02,zFrente,g),"5.10");
 
-    // Módulos E/S
     [["5.12",0.35,M.verde],["5.12",0.24,M.verde],["5.12",0.13,M.verde],["5.13",0.02,M.ambar],
      ["5.14",-0.09,M.ambar],["5.15",-0.2,M.azul],["5.16",-0.31,M.azul],["5.17",-0.42,M.rojo],
      ["5.18",-0.53,M.rojo],["5.19",-0.64,M.negro]].forEach(([id,dx,mat]) => {
@@ -216,30 +210,24 @@ function gabinete(x, tipo){
       box(0.075,0.02,0.01,M.ledV,dx,y-0.56,zFrente+0.06,g);
     });
 
-    // Borneras y fuentes AC/DC
     const g21 = grupo(0,0,0,g);
     for(let i=0;i<6;i++) box(0.16,0.1,0.1,M.negro,-0.25+i*0.1,0.64,zFrente,g21);
     tag(g21,"5.21");
     [0.24,0.06].forEach(dy => tag(box(0.28,0.12,0.15,M.acero,0.2,0.95+dy,zFrente,g),"5.20"));
 
   } else {
-    // Gabinete 2: Lleno de marshalling, relés y borneras
     const g12 = grupo(0,0,0,g), g13 = grupo(0,0,0,g);
-    
-    // Filas superiores (Borneras de prueba)
     for(let r=0;r<8;r++) for(let i=0;i<7;i++){
       box(0.075,0.09,0.1, r<4?M.pintEp:M.negro, -0.26+i*0.088, 1.7-r*0.14, zFrente, r<4?g12:g13);
       box(0.05,0.012,0.01,M.ledV,-0.26+i*0.088,1.74-r*0.14,zFrente+0.06, r<4?g12:g13);
     }
     tag(g12,"6.12"); tag(g13,"6.13");
     
-    // Aisladores galvánicos (Azules)
     const g10 = grupo(0,0,0,g);
     for(let r=0;r<4;r++) for(let i=0;i<6;i++)
       box(0.07,0.14,0.1,M.azul,-0.24+i*0.09,0.82-r*0.19,zFrente,g10);
     tag(g10,"6.10");
     
-    // Relés de interfaz (Negros)
     const g11 = grupo(0,0,0,g);
     for(let r=0;r<3;r++) for(let i=0;i<7;i++){
       box(0.06,0.11,0.1,M.negro,-0.26+i*0.085,0.3-r*0.14,zFrente,g11);
@@ -250,7 +238,6 @@ function gabinete(x, tipo){
     tag(box(0.16,0.14,0.1,M.acero,0.24,1.22,zFrente,g),"6.7");
   }
 
-  // 4. Puerta Abatible
   const puertaPivot = new THREE.Group();
   puertaPivot.position.set(-W/2, 0, D/2); 
   g.add(puertaPivot);
@@ -259,20 +246,14 @@ function gabinete(x, tipo){
   puertaPanel.position.set(W/2, H/2+0.14, 0); 
   puertaPivot.add(puertaPanel);
 
-  // Marco de la puerta
   tag(box(W-0.06,H-0.14,0.04,M.pintEp,0,0,0,puertaPanel), tipo==='a'?"5.1":"6.1");
-  
-  // Ventana de vidrio (transparente)
   const v = new THREE.Mesh(new THREE.PlaneGeometry(W-0.26,H*0.55), M.vidrio);
   v.position.set(0,H*0.13,0.022); puertaPanel.add(v);
-  
-  // Manija
   box(0.03,0.22,0.05,M.acero,W/2-0.11,-0.5,0.05,puertaPanel); 
 
-  // HMI montado en la puerta (Solo para el Gabinete 1)
   if(tipo === 'a'){
     const hmiGroup = grupo(0, 0.2, 0.04, puertaPanel); 
-    tag(box(0.4,0.3,0.03,M.negro,0,0,0,hmiGroup),"5.22"); // Más delgado
+    tag(box(0.4,0.3,0.03,M.negro,0,0,0,hmiGroup),"5.22");
     const hs = new THREE.Mesh(new THREE.PlaneGeometry(0.34,0.22), M.pantalla);
     hs.position.set(0,0,0.02); hmiGroup.add(hs);
   }
@@ -392,7 +373,6 @@ function buildCampo(){
   crearPOI(19, 10, 12, "Almacenamiento (33X1/2)", "Agua desmineralizada almacenada en tanques 33X1 y 33X2 (33.000 barriles c/u). Lazo 74LV-52 controla nivel.");
   crearPOI(25, 3, -2.5, "Distribución y Bombeo", "Bombas G-7451 A/B/C envían agua al Desaereador D-7451, que alimenta las calderas de la refinería.");
 
-  // Skid de Ácido
   (function(){
     const g = grupo(-30, 0, 6, campoGroup);
     const tk = cyl(0.8, 0.8, 3.5, M.acero, 0, 1.8, 0, g, 20); tk.rotation.z = Math.PI/2; tag(tk, "10.25");
@@ -401,7 +381,6 @@ function buildCampo(){
     const p = rotulo("SKID ÁCIDO (H2SO4)", 1.8, 0.25); p.position.set(0, 3.0, 0); p.rotation.x = -Math.PI/2; g.add(p);
   })();
 
-  // Skid de Soda
   (function(){
     const g = grupo(-22, 0, 6, campoGroup);
     const tk = cyl(1.0, 1.0, 2.0, M.azul, 0, 1.0, 0, g, 20); tag(tk, "10.26");
@@ -409,7 +388,6 @@ function buildCampo(){
     const p = rotulo("SKID SODA (NaOH)", 1.8, 0.25); p.position.set(0, 2.5, 0); p.rotation.x = -Math.PI/2; g.add(p);
   })();
 
-  // Filtros
   for(let i=0;i<11;i++){
     const g = grupo(-38+i*2.1,0,0,campoGroup);
     [-0.45,0.45].forEach(dx => box(0.24,0.95,1.0,M.concreto,dx,0.48,0,g));
@@ -619,7 +597,7 @@ function buildAll(){
 
 function animarPuertas(dt) {
   const velocidad = 3.0;
-  const maxAngulo = -Math.PI / 2.2; // Gira hacia afuera (negativo)
+  const maxAngulo = -Math.PI / 2.2; 
   
   ['gab1', 'gab2'].forEach(key => {
     const pivot = puertas[key];
@@ -631,5 +609,7 @@ function animarPuertas(dt) {
       if(estadoPuertas[key] && pivot.rotation.y < maxAngulo) pivot.rotation.y = maxAngulo;
       if(!estadoPuertas[key] && pivot.rotation.y > 0) pivot.rotation.y = 0;
     }
+  });
+}
   });
 }
