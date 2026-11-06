@@ -1,55 +1,52 @@
 /*
- * Correcciones de escena para la maqueta.
- * Se carga después de builders.js y fps.js, y antes de main.js.
+ * Correcciones de geometría para la sala de control.
+ * Se carga después de builders.js y fps.js, antes de main.js.
  */
 (function () {
-  const FLOOR_Y = 0.06;
-  const EYE_HEIGHT = 1.64;
-
-  // El bloque exterior de 11 x 0.55 x 7 estaba colocado dentro de la sala,
-  // tapando visualmente las patas de las mesas y la base de las sillas.
   const buildAllOriginal = buildAll;
+
+  function fixSala(sala) {
+    if (!sala) return;
+
+    const remove = [];
+    const meshes = [];
+    sala.traverse(object => {
+      if (!object.isMesh || !object.geometry) return;
+      const p = object.geometry.parameters || {};
+
+      // Este bloque de pared de 11 x 0.55 x 7 estaba en el centro de la sala,
+      // a ras del piso, y ocultaba las patas y la mayor parte del mobiliario.
+      if (
+        object.material === M.paredExt &&
+        p.width === 11 && p.height === 0.55 && p.depth === 7 &&
+        Math.abs(object.position.y - 0.4) < 1e-6
+      ) {
+        remove.push(object);
+        return;
+      }
+
+      meshes.push(object);
+    });
+    remove.forEach(mesh => mesh.removeFromParent());
+
+    // Las patas de ambas mesas deben comenzar justo sobre el epóxico (y=0.06).
+    meshes.forEach(mesh => {
+      const p = mesh.geometry && mesh.geometry.parameters;
+      if (!p || !mesh.material) return;
+      if (
+        mesh.material === M.acero &&
+        ((p.width === 0.06 && p.height === 0.75 && p.depth === 0.06) ||
+         (p.width === 0.05 && p.height === 0.75 && p.depth === 0.05)) &&
+        mesh.position.y === 0.38
+      ) {
+        mesh.position.y = 0.435;
+      }
+    });
+  }
+
   buildAll = function () {
     const result = buildAllOriginal();
-    const sala = result && result.sala;
-
-    if (sala) {
-      const meshesToRemove = [];
-      sala.traverse(object => {
-        const p = object.geometry && object.geometry.parameters;
-        if (
-          object.isMesh &&
-          object.material === M.paredExt &&
-          p && p.width === 11 && p.height === 0.55 && p.depth === 7 &&
-          Math.abs(object.position.y - 0.4) < 1e-6
-        ) {
-          meshesToRemove.push(object);
-        }
-      });
-      meshesToRemove.forEach(mesh => mesh.removeFromParent());
-    }
-
+    fixSala(result && result.sala);
     return result;
-  };
-
-  // player.pos.y es la altura de los ojos, no la altura de los pies.
-  // El piso terminado está en y=0.06, así que los ojos no pueden bajar de
-  // piso + altura de ojos. La corrección posterior también cubre saltos,
-  // teletransportes y la resolución de colisiones existente.
-  player.height = EYE_HEIGHT;
-  const actualizarFPSOriginal = actualizarFPS;
-  actualizarFPS = function (dt) {
-    actualizarFPSOriginal(dt);
-
-    const minEyeY = FLOOR_Y + player.height;
-    if (player.pos.y < minEyeY) {
-      player.pos.y = minEyeY;
-      if (player.vel.y < 0) player.vel.y = 0;
-      player.onGround = true;
-    }
-
-    if (typeof camera !== 'undefined') {
-      camera.position.y = player.pos.y;
-    }
   };
 })();
