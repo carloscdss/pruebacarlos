@@ -5,7 +5,7 @@
 const RX0=-5, RX1=5, RZ0=22, RZ1=28, RH=3.3;
 const lucesSala = [];
 const puertas = { gab1: null, gab2: null };
-const estadoPuertas = { gab1: false, gab2: false };
+const estadoPuertas = { gab1: false, gab2: false, sala: false };
 
 function buildTerreno(){
   const ground = new THREE.Mesh(new THREE.PlaneGeometry(360, 280), M.suelo);
@@ -35,20 +35,17 @@ function buildSala(){
   box(3.95,RH,0.26,M.pared, 3.05,RH/2+0.06,RZ1+0.13,sala);
   box(2.8,RH-2.2,0.26,M.pared,0,2.2+(RH-2.2)/2+0.06,RZ1+0.13,sala);
   
-  // Pared central eliminada
-  
+  // Puerta principal de la Sala
   const puertaG = grupo(0,0,RZ1+0.13);
   puertaG.userData.esPuerta = 'sala';
   box(1.1,2.2,0.09,M.acero,0,1.16,0,puertaG);
   box(0.9,1.95,0.02,M.pintEp,0,1.15,0.06,puertaG);
   box(0.05,0.16,0.06,M.acero,0.4,1.06,0.09,puertaG);
-  puertaG.traverse(o => {
-    if(o.isMesh){
-      o.userData.esPuerta = 'sala';
-      if(!pickables.includes(o)) pickables.push(o);
-    }
-  });
+  puertaG.traverse(o => { if(o.isMesh) { o.userData.esPuerta = 'sala'; if(!pickables.includes(o)) pickables.push(o); } });
   sala.add(puertaG);
+  window.puertaSalaPivot = puertaG; // Guardamos para animar
+  puertaG.position.set(0.55, 0, RZ1+0.13); // Movemos el pivote a la bisagra derecha
+  
   box(1.3,0.09,0.24,M.concreto,0,0.1,RZ1+0.3,sala);
 
   box(0.16,1.2,2.3,M.acero,RX0-0.1,1.78,24.2,sala);
@@ -204,7 +201,6 @@ function gabinete(x, tipo){
       tag(box(0.66,0.2,0.15,M.filtro,0,yy,zFrente,g),"5.8");
       for(let i=0;i<6;i++) box(0.09,0.17,0.1, i<2?M.azul:M.verde, -0.26+i*0.105, yy, zFrente+0.05, g);
     });
-    
     tag(box(0.1,0.19,0.1,M.negro,-0.3,y,zFrente,g),"5.11");
     tag(box(0.11,0.18,0.1,M.azul,-0.37,y-0.02,zFrente,g),"5.9");
     tag(box(0.09,0.14,0.1,M.acero,-0.3,y-0.02,zFrente,g),"5.10");
@@ -258,11 +254,10 @@ function gabinete(x, tipo){
     hs.position.set(0,0,0.02); hmiGroup.add(hs);
   }
 
-  // 🔥 ETIQUETAMOS LA PUERTA PARA QUE SEA INTERACTIVA EN EL RAYCAST
+  // 🔥 ETIQUETAMOS LA PUERTA
   if(tipo === 'a') { puertas.gab1 = puertaPivot; puertaPivot.userData.esPuerta = 'gab1'; }
   else { puertas.gab2 = puertaPivot; puertaPivot.userData.esPuerta = 'gab2'; }
   
-  // Hacemos que toda la puerta sea detectable
   puertaPivot.traverse(o => { if(o.isMesh) { o.userData.esPuerta = puertaPivot.userData.esPuerta; if(!pickables.includes(o)) pickables.push(o); } });
 
   return g;
@@ -371,7 +366,7 @@ function buildCampo(){
     return g;
   };
 
-  crearPOI(-45, 3, 0, "Captación y Filtración", "El agua del río Sanchón (1050 GPM) es succionada por las bombas G-951 y G-952 hacia los filtros a presión (D-960, D-961). Eliminan sólidos, [...]
+  crearPOI(-45, 3, 0, "Captación y Filtración", "El agua del río Sanchón (1050 GPM) es succionada por las bombas G-951 y G-952 hacia los filtros a presión (D-960, D-961).");
   crearPOI(-31, 6, 17, "Trenes Desmineralizadores", "El agua pasa por los 3 trenes (M-7451). Catiónico retiene Ca/Mg (H+). Aniónico retiene sulfatos/cloruros (OH-).");
   crearPOI(-26, 4, 4, "Regeneración Química", "Resinas saturadas se regeneran con H2SO4 (Skid Ácido D-7456) al 2-8% y Soda Cáustica (M-7451-F5A).");
   crearPOI(19, 10, 12, "Almacenamiento (33X1/2)", "Agua desmineralizada almacenada en tanques 33X1 y 33X2 (33.000 barriles c/u). Lazo 74LV-52 controla nivel.");
@@ -603,6 +598,7 @@ function animarPuertas(dt) {
   const velocidad = 3.0;
   const maxAngulo = -Math.PI / 2.2; 
   
+  // Animación de gabinetes
   ['gab1', 'gab2'].forEach(key => {
     const pivot = puertas[key];
     if(!pivot) return;
@@ -614,4 +610,16 @@ function animarPuertas(dt) {
       if(!estadoPuertas[key] && pivot.rotation.y > 0) pivot.rotation.y = 0;
     }
   });
+
+  // Animación de puerta de sala
+  if (window.puertaSalaPivot) {
+    const pivot = window.puertaSalaPivot;
+    const objetivo = estadoPuertas.sala ? -Math.PI / 2 : 0;
+    const actual = pivot.rotation.y;
+    if (Math.abs(objetivo - actual) > 0.001) {
+      pivot.rotation.y += Math.sign(objetivo - actual) * velocidad * dt;
+      if (estadoPuertas.sala && pivot.rotation.y < objetivo) pivot.rotation.y = objetivo;
+      if (!estadoPuertas.sala && pivot.rotation.y > 0) pivot.rotation.y = 0;
+    }
+  }
 }
