@@ -1,11 +1,11 @@
 /* =====================================================================
-   BUILDERS — construcción de sala, gabinetes, campo, rutas
+   BUILDERS — construcción de sala, gabinetes, campo, rutas nuevo actualizado
    ===================================================================== */
 
 const RX0=-5, RX1=5, RZ0=22, RZ1=28, RH=3.3;
 const lucesSala = [];
-const puertas = { gab1: null, gab2: null };
-const estadoPuertas = { gab1: false, gab2: false };
+const puertas = { gab1: null, gab2: null, sala: null };
+const estadoPuertas = { gab1: false, gab2: false, sala: false };
 
 function buildTerreno(){
   const ground = new THREE.Mesh(new THREE.PlaneGeometry(360, 280), M.suelo);
@@ -31,16 +31,22 @@ function buildSala(){
   box(10.7,0.3,6.7,M.techo,0,RH+0.15,25,sala);
   const muro = (w,d,x,z) => box(w,RH,d,M.pared,x,RH/2+0.06,z,sala);
   muro(0.26,6.7,RX0-0.13,25); muro(0.26,6.7,RX1+0.13,25); muro(10.7,0.26,0,RZ0-0.13);
+  
   box(3.95,RH,0.26,M.pared,-3.05,RH/2+0.06,RZ1+0.13,sala);
   box(3.95,RH,0.26,M.pared, 3.05,RH/2+0.06,RZ1+0.13,sala);
   box(2.8,RH-2.2,0.26,M.pared,0,2.2+(RH-2.2)/2+0.06,RZ1+0.13,sala);
   box(11,0.55,7,M.paredExt,0,0.4,25,sala);
 
-  const puertaG = grupo(0,0,RZ1+0.13);
-  box(1.1,2.2,0.09,M.acero,0,1.16,0,puertaG);
-  box(0.9,1.95,0.02,M.pintEp,0,1.15,0.06,puertaG);
-  box(0.05,0.16,0.06,M.acero,0.4,1.06,0.09,puertaG);
+  // Puerta de la sala (interactiva)
+  const puertaG = grupo(-0.55, 0, RZ1+0.13);
+  const panelPuerta = box(1.1, 2.2, 0.09, M.acero, 0.55, 1.16, 0, puertaG);
+  box(0.9, 1.95, 0.02, M.pintEp, 0.55, 1.15, 0.06, puertaG);
+  box(0.05, 0.16, 0.06, M.acero, 0.95, 1.06, 0.09, puertaG); // Manilla
+  panelPuerta.userData.esPuerta = 'sala'; // Tag para saber que es la puerta
+  pickables.push(panelPuerta);
   sala.add(puertaG);
+  puertas.sala = puertaG;
+
   box(1.3,0.09,0.24,M.concreto,0,0.1,RZ1+0.3,sala);
 
   box(0.16,1.2,2.3,M.acero,RX0-0.1,1.78,24.2,sala);
@@ -615,6 +621,18 @@ function animarPuertas(dt) {
   const velocidad = 3.0;
   const maxAngulo = -Math.PI / 2.2;
   
+  // Puerta de la Sala
+  if(puertas.sala){
+    const objetivo = estadoPuertas.sala ? maxAngulo : 0;
+    const actual = puertas.sala.rotation.y;
+    if(Math.abs(objetivo - actual) > 0.001) {
+      puertas.sala.rotation.y += Math.sign(objetivo - actual) * velocidad * dt;
+      if(estadoPuertas.sala && puertas.sala.rotation.y < maxAngulo) puertas.sala.rotation.y = maxAngulo;
+      if(!estadoPuertas.sala && puertas.sala.rotation.y > 0) puertas.sala.rotation.y = 0;
+    }
+  }
+
+  // Puertas de Gabinetes
   ['gab1', 'gab2'].forEach(key => {
     const pivot = puertas[key];
     if(!pivot) return;
