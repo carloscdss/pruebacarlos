@@ -84,11 +84,11 @@ function entrarFPS(){
   if(report) report.classList.remove('visible');
   if(info) {
     info.style.display = ''; 
-    info.style.bottom = '120px'; // Subimos el panel de info
-    info.style.left = '50%';     // Lo centramos
-    info.style.transform = 'translateX(-50%)'; // Centrado real
-    info.style.width = '320px';  // Un poco más ancho
-    info.style.zIndex = '100';   // Aseguramos que esté encima
+    info.style.bottom = '120px';
+    info.style.left = '50%';
+    info.style.transform = 'translateX(-50%)';
+    info.style.width = '320px';
+    info.style.zIndex = '100';
   }
 
   if(crosshair) crosshair.classList.add('visible');
@@ -96,7 +96,6 @@ function entrarFPS(){
   if(fpsBar) fpsBar.classList.add('visible');
   if(touchControls) touchControls.style.display = 'block';
 
-  // Posición inicial de la cámara
   player.pos.set(0, FPS_FLOOR_Y + player.height, 15);
   player.yaw = 0; player.pitch = 0;
   player.vel.set(0,0,0);
@@ -107,11 +106,10 @@ function entrarFPS(){
   }
   if(playOverlay) playOverlay.classList.add('visible');
   
-  // Solicitamos capturar el mouse (Pointer Lock) al hacer clic en el overlay
   if(playOverlay) {
     playOverlay.onclick = () => {
       playOverlay.classList.remove('visible');
-      if(!('ontouchstart' in window)) { // Solo si no es móvil
+      if(!('ontouchstart' in window)) {
         renderer.domElement.requestPointerLock();
       }
     };
@@ -147,7 +145,6 @@ function salirFPS(){
     scene.fog.far = 340;
   }
   
-  // Salir del pointer lock si está activo
   if(document.pointerLockElement) {
     document.exitPointerLock();
   }
@@ -157,7 +154,7 @@ function salirFPS(){
 
 document.addEventListener('keydown', e => {
   keys[e.code] = true;
-  if(e.code === 'Escape' && fpsMode.value) salirFPS(); // Tecla Esc configurada
+  if(e.code === 'Escape' && fpsMode.value) salirFPS();
   if(e.code === 'KeyT' && fpsMode.value) viajarAObjetoAim();
   if(e.code === 'KeyM' && fpsMode.value && teleportMenu) teleportMenu.classList.toggle('visible');
 });
@@ -166,7 +163,6 @@ document.addEventListener('keyup', e => {
   keys[e.code] = false; 
 });
 
-// --- LÓGICA DE MOUSE (Pointer Lock) ---
 let isDragging = false, lastMouseX = 0, lastMouseY = 0;
 const mouseSensitivity = 0.005;
 
@@ -192,40 +188,16 @@ document.addEventListener('mousemove', e => {
   if(!fpsMode.value) return;
   
   if(document.pointerLockElement === renderer.domElement) {
-    // Mouse capturado (movimiento relativo)
     player.yaw -= e.movementX * mouseSensitivity;
     player.pitch -= e.movementY * mouseSensitivity;
     player.pitch = Math.max(-Math.PI/2 + 0.05, Math.min(Math.PI/2 - 0.05, player.pitch));
   } else if(isDragging) {
-    // Mouse suelto (arrastrar normal)
     player.yaw -= (e.clientX - lastMouseX) * mouseSensitivity;
     player.pitch -= (e.clientY - lastMouseY) * mouseSensitivity;
     player.pitch = Math.max(-Math.PI/2 + 0.05, Math.min(Math.PI/2 - 0.05, player.pitch));
     lastMouseX = e.clientX; lastMouseY = e.clientY;
   }
 });
-
-// Soporte Táctil (Móvil)
-if(typeof renderer !== 'undefined' && renderer && renderer.domElement) {
-  let lastTouchX = 0, lastTouchY = 0;
-  renderer.domElement.addEventListener('touchstart', e => {
-    if(!fpsMode.value) return;
-    if(e.target === renderer.domElement && e.touches.length > 0) {
-      lastTouchX = e.touches[0].clientX; lastTouchY = e.touches[0].clientY;
-    }
-  }, {passive: false});
-  
-  renderer.domElement.addEventListener('touchmove', e => {
-    if(!fpsMode.value) return;
-    if(e.target === renderer.domElement && e.touches.length > 0) {
-      e.preventDefault();
-      player.yaw -= (e.touches[0].clientX - lastTouchX) * 0.01;
-      player.pitch -= (e.touches[0].clientY - lastTouchY) * 0.01;
-      player.pitch = Math.max(-Math.PI/2 + 0.05, Math.min(Math.PI/2 - 0.05, player.pitch));
-      lastTouchX = e.touches[0].clientX; lastTouchY = e.touches[0].clientY;
-    }
-  }, {passive: false});
-}
 
 if(joyZone) {
   joyZone.addEventListener('touchstart', e => { e.preventDefault(); isDraggingJoy = true; updateJoy(e.touches[0]); }, {passive: false});
@@ -311,6 +283,7 @@ function inspeccionarFPS(){
   if(h.length > 0) {
     let objTocado = h[0].object;
     
+    // Abrir Puertas (Sala, Gabinetes)
     if(objTocado.userData.esPuerta) {
       const idPuerta = objTocado.userData.esPuerta;
       
@@ -327,6 +300,7 @@ function inspeccionarFPS(){
       return;
     }
     
+    // Seleccionar renglón
     if(objTocado.userData.renglon && typeof seleccionar === 'function') {
       seleccionar(objTocado.userData.renglon);
     }
@@ -436,11 +410,9 @@ function colisiona(x, y, z, isSalaOpen){
   const feet = y - player.height;
   const head = y;
   
-  // Si la puerta de la sala está abierta, ignoramos la colisión del marco
   for(const c of colliders){
-    // Chequeo especial para la pared frontal de la sala (RZ1)
+    // Si la puerta de la sala está abierta, ignoramos la colisión de la pared frontal
     if (isSalaOpen && c.minZ >= 28 && c.maxZ <= 28.3) {
-       // Si la puerta está abierta y estamos en el hueco de la puerta, no colisionar
        if (x > -0.5 && x < 0.5) continue; 
     }
     
