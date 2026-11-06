@@ -36,11 +36,18 @@ function buildSala(){
   box(2.8,RH-2.2,0.26,M.pared,0,2.2+(RH-2.2)/2+0.06,RZ1+0.13,sala);
   
   // Pared central eliminada
-
+  
   const puertaG = grupo(0,0,RZ1+0.13);
+  puertaG.userData.esPuerta = 'sala';
   box(1.1,2.2,0.09,M.acero,0,1.16,0,puertaG);
   box(0.9,1.95,0.02,M.pintEp,0,1.15,0.06,puertaG);
   box(0.05,0.16,0.06,M.acero,0.4,1.06,0.09,puertaG);
+  puertaG.traverse(o => {
+    if(o.isMesh){
+      o.userData.esPuerta = 'sala';
+      if(!pickables.includes(o)) pickables.push(o);
+    }
+  });
   sala.add(puertaG);
   box(1.3,0.09,0.24,M.concreto,0,0.1,RZ1+0.3,sala);
 
@@ -201,19 +208,16 @@ function gabinete(x, tipo){
     tag(box(0.1,0.19,0.1,M.negro,-0.3,y,zFrente,g),"5.11");
     tag(box(0.11,0.18,0.1,M.azul,-0.37,y-0.02,zFrente,g),"5.9");
     tag(box(0.09,0.14,0.1,M.acero,-0.3,y-0.02,zFrente,g),"5.10");
-
     [["5.12",0.35,M.verde],["5.12",0.24,M.verde],["5.12",0.13,M.verde],["5.13",0.02,M.ambar],
      ["5.14",-0.09,M.ambar],["5.15",-0.2,M.azul],["5.16",-0.31,M.azul],["5.17",-0.42,M.rojo],
      ["5.18",-0.53,M.rojo],["5.19",-0.64,M.negro]].forEach(([id,dx,mat]) => {
       tag(box(0.09,0.17,0.1,mat,dx,y-0.62,zFrente,g),id);
       box(0.075,0.02,0.01,M.ledV,dx,y-0.56,zFrente+0.06,g);
     });
-
     const g21 = grupo(0,0,0,g);
     for(let i=0;i<6;i++) box(0.16,0.1,0.1,M.negro,-0.25+i*0.1,0.64,zFrente,g21);
     tag(g21,"5.21");
     [0.24,0.06].forEach(dy => tag(box(0.28,0.12,0.15,M.acero,0.2,0.95+dy,zFrente,g),"5.20"));
-
   } else {
     const g12 = grupo(0,0,0,g), g13 = grupo(0,0,0,g);
     for(let r=0;r<8;r++) for(let i=0;i<7;i++){
@@ -221,19 +225,16 @@ function gabinete(x, tipo){
       box(0.05,0.012,0.01,M.ledV,-0.26+i*0.088,1.74-r*0.14,zFrente+0.06, r<4?g12:g13);
     }
     tag(g12,"6.12"); tag(g13,"6.13");
-    
     const g10 = grupo(0,0,0,g);
     for(let r=0;r<4;r++) for(let i=0;i<6;i++)
       box(0.07,0.14,0.1,M.azul,-0.24+i*0.09,0.82-r*0.19,zFrente,g10);
     tag(g10,"6.10");
-    
     const g11 = grupo(0,0,0,g);
     for(let r=0;r<3;r++) for(let i=0;i<7;i++){
       box(0.06,0.11,0.1,M.negro,-0.26+i*0.085,0.3-r*0.14,zFrente,g11);
       box(0.02,0.02,0.01,M.ledA,-0.26+i*0.085,0.34-r*0.14,zFrente+0.06,g11);
     }
     tag(g11,"6.11");
-    
     tag(box(0.16,0.14,0.1,M.acero,0.24,1.22,zFrente,g),"6.7");
   }
 
@@ -257,8 +258,12 @@ function gabinete(x, tipo){
     hs.position.set(0,0,0.02); hmiGroup.add(hs);
   }
 
-  if(tipo === 'a') puertas.gab1 = puertaPivot;
-  else puertas.gab2 = puertaPivot;
+  // 🔥 ETIQUETAMOS LA PUERTA PARA QUE SEA INTERACTIVA EN EL RAYCAST
+  if(tipo === 'a') { puertas.gab1 = puertaPivot; puertaPivot.userData.esPuerta = 'gab1'; }
+  else { puertas.gab2 = puertaPivot; puertaPivot.userData.esPuerta = 'gab2'; }
+  
+  // Hacemos que toda la puerta sea detectable
+  puertaPivot.traverse(o => { if(o.isMesh) { o.userData.esPuerta = puertaPivot.userData.esPuerta; if(!pickables.includes(o)) pickables.push(o); } });
 
   return g;
 }
@@ -366,7 +371,7 @@ function buildCampo(){
     return g;
   };
 
-  crearPOI(-45, 3, 0, "Captación y Filtración", "El agua del río Sanchón (1050 GPM) es succionada por las bombas G-951 y G-952 hacia los filtros a presión (D-960, D-961). Eliminan sólidos, olores y cloro.");
+  crearPOI(-45, 3, 0, "Captación y Filtración", "El agua del río Sanchón (1050 GPM) es succionada por las bombas G-951 y G-952 hacia los filtros a presión (D-960, D-961). Eliminan sólidos, [...]
   crearPOI(-31, 6, 17, "Trenes Desmineralizadores", "El agua pasa por los 3 trenes (M-7451). Catiónico retiene Ca/Mg (H+). Aniónico retiene sulfatos/cloruros (OH-).");
   crearPOI(-26, 4, 4, "Regeneración Química", "Resinas saturadas se regeneran con H2SO4 (Skid Ácido D-7456) al 2-8% y Soda Cáustica (M-7451-F5A).");
   crearPOI(19, 10, 12, "Almacenamiento (33X1/2)", "Agua desmineralizada almacenada en tanques 33X1 y 33X2 (33.000 barriles c/u). Lazo 74LV-52 controla nivel.");
