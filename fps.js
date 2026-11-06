@@ -1,3 +1,4 @@
+// Declaración segura de variables y objetos globales del sistema FPS
 const player = {
   pos: new THREE.Vector3(0, 1.7, 15),
   vel: new THREE.Vector3(),
@@ -11,17 +12,17 @@ const player = {
 const fpsMode = { value: false };
 const keys = {};
 
+// Instanciación anticipada del Raycaster para prevenir errores en el bucle
+const fpsRay = new THREE.Raycaster();
+const centerNDC = new THREE.Vector2(0, 0);
+let hoveredId = null;
+
 const crosshair   = document.getElementById('crosshair');
 const fpsHelp    = document.getElementById('fps-help');
 const playOverlay= document.getElementById('play-overlay');
 const fpsBar     = document.getElementById('fps-bar');
 const teleportMenu = document.getElementById('teleport-menu');
 const touchControls = document.getElementById('touch-controls');
-
-// Declaración temprana del Raycaster para evitar errores de inicialización
-const fpsRay = new THREE.Raycaster();
-const centerNDC = new THREE.Vector2(0, 0);
-let hoveredId = null;
 
 // Variables del Joystick
 let joyX = 0, joyY = 0;
@@ -62,7 +63,7 @@ function buildTeleportMenu(cams){
 
 function entrarFPS(){
   fpsMode.value = true;
-  controls.enabled = false;
+  if(typeof controls !== 'undefined' && controls) controls.enabled = false;
   document.querySelectorAll('.presets button').forEach(b => b.classList.remove('on'));
   
   const sidebar = document.getElementById('sidebar');
@@ -76,13 +77,12 @@ function entrarFPS(){
   if(crosshair) crosshair.classList.add('visible');
   if(fpsHelp) fpsHelp.classList.add('visible');
   if(fpsBar) fpsBar.classList.add('visible');
-  
   if(touchControls) touchControls.style.display = 'block';
 
   player.pos.set(0, 1.7, 15);
   player.yaw = 0; player.pitch = 0;
   player.vel.set(0,0,0);
-  if(scene && scene.fog) {
+  if(typeof scene !== 'undefined' && scene.fog) {
     scene.fog.near = 30; 
     scene.fog.far = 220;
   }
@@ -91,7 +91,7 @@ function entrarFPS(){
 
 function salirFPS(){
   fpsMode.value = false;
-  controls.enabled = true;
+  if(typeof controls !== 'undefined' && controls) controls.enabled = true;
   if(crosshair) crosshair.classList.remove('visible');
   if(fpsHelp) fpsHelp.classList.remove('visible');
   if(fpsBar) fpsBar.classList.remove('visible');
@@ -105,17 +105,16 @@ function salirFPS(){
   if(sidebar) sidebar.style.display = '';
   if(info) info.style.display = '';
   if(report) report.classList.add('visible');
-  
   if(touchControls) touchControls.style.display = 'none';
 
-  if(scene && scene.fog) {
+  if(typeof scene !== 'undefined' && scene.fog) {
     scene.fog.near = 150; 
     scene.fog.far = 340;
   }
   if(typeof irA === 'function') irA('overview');
 }
 
-// Controles teclado (PC)
+// Control Teclado PC
 document.addEventListener('keydown', e => {
   keys[e.code] = true;
   if(e.code === 'Escape' && fpsMode.value) salirFPS();
@@ -124,11 +123,11 @@ document.addEventListener('keydown', e => {
 });
 document.addEventListener('keyup', e => { keys[e.code] = false; });
 
-// Controles Mouse
+// Control Mouse
 let isDragging = false, lastMouseX = 0, lastMouseY = 0;
 const mouseSensitivity = 0.005;
 
-if(renderer && renderer.domElement) {
+if(typeof renderer !== 'undefined' && renderer && renderer.domElement) {
   renderer.domElement.addEventListener('mousedown', e => { if(fpsMode.value) { isDragging = true; lastMouseX = e.clientX; lastMouseY = e.clientY; } });
 }
 document.addEventListener('mouseup', () => { isDragging = false; });
@@ -140,9 +139,9 @@ document.addEventListener('mousemove', e => {
   lastMouseX = e.clientX; lastMouseY = e.clientY;
 });
 
-// Soporte Táctil para mirar
-let lastTouchX = 0, lastTouchY = 0;
-if(renderer && renderer.domElement) {
+// Soporte Táctil
+if(typeof renderer !== 'undefined' && renderer && renderer.domElement) {
+  let lastTouchX = 0, lastTouchY = 0;
   renderer.domElement.addEventListener('touchstart', e => {
     if(!fpsMode.value) return;
     if(e.target === renderer.domElement && e.touches.length > 0) {
@@ -162,7 +161,7 @@ if(renderer && renderer.domElement) {
   }, {passive: false});
 }
 
-// Lógica del Joystick
+// Joystick Táctil
 if(joyZone) {
   joyZone.addEventListener('touchstart', e => { e.preventDefault(); isDraggingJoy = true; updateJoy(e.touches[0]); }, {passive: false});
   joyZone.addEventListener('touchmove', e => { e.preventDefault(); if(isDraggingJoy && e.touches.length > 0) updateJoy(e.touches[0]); }, {passive: false});
@@ -187,12 +186,9 @@ function updateJoy(touch) {
   knob.style.transform = `translate(calc(-50% + ${joyX * maxDist * 0.8}px), calc(-50% + ${joyY * maxDist * 0.8}px))`;
 }
 
-// Botón de acción
 const btnAction = document.getElementById('btn-action');
 if(btnAction) {
-  btnAction.addEventListener('click', () => {
-    inspeccionarFPS();
-  });
+  btnAction.addEventListener('click', () => { inspeccionarFPS(); });
 }
 
 if(playOverlay) {
