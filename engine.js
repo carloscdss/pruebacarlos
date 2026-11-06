@@ -78,7 +78,7 @@ const M = {
   ledA:new THREE.MeshBasicMaterial({color:0xf5c518}),
   filtro:new THREE.MeshStandardMaterial({color:0x6f7a83,roughness:0.55,metalness:0.6}),
   
-  // 🔥 NUEVOS MATERIALES PARA EL GABINETE SYNnor
+  // 🔥 NUEVOS MATERIALES PARA EL GABINETE SYNNOR
   gabinetePerlado: new THREE.MeshStandardMaterial({color:0xe8eaed, roughness:0.3, metalness:0.4}),
   baseNegra: new THREE.MeshStandardMaterial({color:0x111213, roughness:0.7, metalness:0.2}),
   rejillaMetal: new THREE.MeshStandardMaterial({color:0x55595c, roughness:0.6, metalness:0.8}),
