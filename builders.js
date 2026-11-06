@@ -614,7 +614,7 @@ function animarPuertas(dt) {
   // Animación de puerta de sala
   if (window.puertaSalaPivot) {
     const pivot = window.puertaSalaPivot;
-    const objetivo = estadoPuertas.sala ? -Math.PI / 2 : 0;
+    const objetivo = estadoPuertas.sala ? -Math.PI / 2 : 0; // Abre 90 grados
     const actual = pivot.rotation.y;
     if (Math.abs(objetivo - actual) > 0.001) {
       pivot.rotation.y += Math.sign(objetivo - actual) * velocidad * dt;
