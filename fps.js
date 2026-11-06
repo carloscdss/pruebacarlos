@@ -1,10 +1,12 @@
 // Declaración segura de variables y objetos globales del sistema FPS
+const FPS_FLOOR_Y = 0.06;
 const player = {
-  pos: new THREE.Vector3(0, 1.7, 15),
+  // pos.y es la altura de la cámara (ojos), no la altura de los pies.
+  pos: new THREE.Vector3(0, FPS_FLOOR_Y + 1.64, 15),
   vel: new THREE.Vector3(),
   yaw: 0, pitch: 0,
   onGround: true,
-  height: 1.7, radius: 0.35,
+  height: 1.64, radius: 0.35,
   speed: 5.5, runMult: 1.8,
   jumpVel: 5.2, gravity: -18
 };
@@ -79,9 +81,10 @@ function entrarFPS(){
   if(fpsBar) fpsBar.classList.add('visible');
   if(touchControls) touchControls.style.display = 'block';
 
-  player.pos.set(0, 1.7, 15);
+  player.pos.set(0, FPS_FLOOR_Y + player.height, 15);
   player.yaw = 0; player.pitch = 0;
   player.vel.set(0,0,0);
+  player.onGround = true;
   if(typeof scene !== 'undefined' && scene.fog) {
     scene.fog.near = 30; 
     scene.fog.far = 220;
@@ -207,8 +210,9 @@ function irAEquipo(camKey, cams){
   if(camKey === 'filtros') offset.set(0, 0, 6);
   if(camKey === 'interc') offset.set(0, 0, 6);
   if(camKey === 'bombas') offset.set(0, 0, 5);
-  player.pos.set(c[0] + offset.x, player.height, c[2] + offset.z);
+  player.pos.set(c[0] + offset.x, FPS_FLOOR_Y + player.height, c[2] + offset.z);
   player.vel.set(0,0,0);
+  player.onGround = true;
   const dx = c[0] - player.pos.x;
   const dz = c[2] - player.pos.z;
   player.yaw = Math.atan2(-dx, -dz);
@@ -223,8 +227,9 @@ function viajarAObjetoAim(){
   const c = caja.getCenter(new THREE.Vector3());
   const size = caja.getSize(new THREE.Vector3());
   const dist = Math.max(size.length() * 1.5, 2.5);
-  player.pos.set(c.x + dist, player.height, c.z + dist);
+  player.pos.set(c.x + dist, FPS_FLOOR_Y + player.height, c.z + dist);
   player.vel.set(0,0,0);
+  player.onGround = true;
   const dx = c.x - player.pos.x;
   const dz = c.z - player.pos.z;
   player.yaw = Math.atan2(-dx, -dz);
@@ -272,19 +277,24 @@ function actualizarFPS(dt){
   if(colisiona(newPos.x, player.pos.y, player.pos.z)){ newPos.x = player.pos.x; player.vel.x = 0; }
   newPos.z += player.vel.z * dt;
   if(colisiona(newPos.x, player.pos.y, newPos.z)){ newPos.z = player.pos.z; player.vel.z = 0; }
+
   newPos.y += player.vel.y * dt;
-  if(colisiona(newPos.x, newPos.y, newPos.z)){
+  const minEyeY = FPS_FLOOR_Y + player.height;
+  if(newPos.y <= minEyeY){
+    newPos.y = minEyeY;
+    player.vel.y = 0;
+    player.onGround = true;
+  } else if(colisiona(newPos.x, newPos.y, newPos.z)){
     if(player.vel.y < 0) player.onGround = true;
-    newPos.y = player.pos.y; player.vel.y = 0;
-  } else {
-    if(player.vel.y < -0.5) player.onGround = false;
+    newPos.y = player.pos.y;
+    player.vel.y = 0;
+  } else if(player.vel.y < -0.5){
+    player.onGround = false;
   }
 
   newPos.x = Math.max(-75, Math.min(75, newPos.x));
   newPos.z = Math.max(-20, Math.min(48, newPos.z));
   player.pos.copy(newPos);
-
-  if(player.pos.y < player.height){ player.pos.y = player.height; player.vel.y = 0; player.onGround = true; }
 
   if(typeof camera !== 'undefined') {
     camera.position.copy(player.pos);
@@ -321,6 +331,7 @@ function actualizarFPS(dt){
   }
 }
 
+// y representa la altura de los ojos; los pies del jugador están en y-height.
 function colisiona(x, y, z){
   const feet = y - player.height;
   const head = y;
