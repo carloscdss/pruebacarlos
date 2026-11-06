@@ -245,13 +245,44 @@ function viajarAObjetoAim(){
   player.pitch = -0.15;
 }
 
+// 🔥 AQUÍ ESTÁ LA MAGIA DE ABRIR PUERTAS CON CLIC/TÁCTIL
 function inspeccionarFPS(){
-  if(hoveredId && typeof seleccionar === 'function') {
-    seleccionar(hoveredId);
-  } else if(typeof pickables !== 'undefined' && typeof camera !== 'undefined') {
-    fpsRay.setFromCamera(centerNDC, camera);
-    const h = fpsRay.intersectObjects(pickables, false);
-    if(h.length && typeof seleccionar === 'function') seleccionar(h[0].object.userData.renglon);
+  if(!camera) return;
+  
+  fpsRay.setFromCamera(centerNDC, camera);
+  fpsRay.far = 6; // Distancia máxima para interactuar
+  
+  const h = fpsRay.intersectObjects(pickables, false);
+  
+  if(h.length > 0) {
+    let objTocado = h[0].object;
+    
+    // SI TOCAMOS UNA PUERTA (Gabinete 1, 2 o Sala)
+    if(objTocado.userData.esPuerta) {
+      const idPuerta = objTocado.userData.esPuerta;
+      
+      if(idPuerta === 'sala') {
+        estadoPuertas.sala = !estadoPuertas.sala;
+        const iTag = document.getElementById('i-tag');
+        if(iTag) iTag.textContent = estadoPuertas.sala ? "Abriendo Puerta Principal..." : "Cerrando Puerta Principal...";
+      } else {
+        estadoPuertas[idPuerta] = !estadoPuertas[idPuerta];
+        const estadoTexto = estadoPuertas[idPuerta] ? 'Abriendo' : 'Cerrando';
+        const iTag = document.getElementById('i-tag');
+        if(iTag) iTag.textContent = "🚪 " + estadoTexto + " Gabinete " + (idPuerta === 'gab1' ? 'N°1' : 'N°2');
+      }
+      return;
+    }
+    
+    // SI TOCAMOS UN EQUIPO NORMAL
+    if(objTocado.userData.renglon && typeof seleccionar === 'function') {
+      seleccionar(objTocado.userData.renglon);
+    }
+  } else {
+    const iTag = document.getElementById('i-tag');
+    const iDesc = document.getElementById('i-desc');
+    if(iTag) iTag.textContent = 'Modo FPS';
+    if(iDesc) iDesc.textContent = 'Acércate a una puerta o equipo y toca el botón 📸';
   }
 }
 
@@ -334,7 +365,7 @@ function actualizarFPS(dt){
       if(iMeta) iMeta.textContent = "Unidad: " + MAP[hoveredId].u + " · Cómputo: " + MAP[hoveredId].q;
     } else {
       if(iTag) iTag.textContent = 'Modo FPS';
-      if(iDesc) iDesc.textContent = 'Mueve el joystick. Arrastra la pantalla para mirar.';
+      if(iDesc) iDesc.textContent = 'Mueve el joystick. Apunta a una puerta y toca el botón 📸';
       if(iMeta) iMeta.textContent = '';
     }
   }
