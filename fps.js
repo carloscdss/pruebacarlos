@@ -68,13 +68,17 @@ function entrarFPS(){
   if(typeof controls !== 'undefined' && controls) controls.enabled = false;
   document.querySelectorAll('.presets button').forEach(b => b.classList.remove('on'));
   
+  // Ocultamos sidebar y reporte, pero MANTENEMOS EL INFO
   const sidebar = document.getElementById('sidebar');
-  const info = document.getElementById('info');
   const report = document.getElementById('report');
+  const info = document.getElementById('info');
   
   if(sidebar) sidebar.style.display = 'none';
-  if(info) info.style.display = 'none';
   if(report) report.classList.remove('visible');
+  if(info) {
+    info.style.display = ''; // Mantenemos visible el panel de info
+    info.style.bottom = '80px'; // Lo subimos un poco para que el joystick no lo tape
+  }
 
   if(crosshair) crosshair.classList.add('visible');
   if(fpsHelp) fpsHelp.classList.add('visible');
@@ -106,7 +110,7 @@ function salirFPS(){
   const report = document.getElementById('report');
 
   if(sidebar) sidebar.style.display = '';
-  if(info) info.style.display = '';
+  if(info) { info.style.display = ''; info.style.bottom = '8px'; }
   if(report) report.classList.add('visible');
   if(touchControls) touchControls.style.display = 'none';
 
@@ -245,19 +249,18 @@ function viajarAObjetoAim(){
   player.pitch = -0.15;
 }
 
-// 🔥 AQUÍ ESTÁ LA MAGIA DE ABRIR PUERTAS CON CLIC/TÁCTIL
 function inspeccionarFPS(){
   if(!camera) return;
   
   fpsRay.setFromCamera(centerNDC, camera);
-  fpsRay.far = 6; // Distancia máxima para interactuar
+  fpsRay.far = 6;
   
   const h = fpsRay.intersectObjects(pickables, false);
   
   if(h.length > 0) {
     let objTocado = h[0].object;
     
-    // SI TOCAMOS UNA PUERTA (Gabinete 1, 2 o Sala)
+    // SI ES UNA PUERTA
     if(objTocado.userData.esPuerta) {
       const idPuerta = objTocado.userData.esPuerta;
       
@@ -274,15 +277,10 @@ function inspeccionarFPS(){
       return;
     }
     
-    // SI TOCAMOS UN EQUIPO NORMAL
+    // SI ES UN EQUIPO
     if(objTocado.userData.renglon && typeof seleccionar === 'function') {
       seleccionar(objTocado.userData.renglon);
     }
-  } else {
-    const iTag = document.getElementById('i-tag');
-    const iDesc = document.getElementById('i-desc');
-    if(iTag) iTag.textContent = 'Modo FPS';
-    if(iDesc) iDesc.textContent = 'Acércate a una puerta o equipo y toca el botón 📸';
   }
 }
 
@@ -349,24 +347,36 @@ function actualizarFPS(dt){
   const spd = Math.hypot(player.vel.x, player.vel.z);
   if(fpsBar) fpsBar.style.transform = `scaleX(${Math.min(1, spd/9)})`;
 
+  // 🔥 ACTUALIZACIÓN DEL HUD (Muestra el TAG si apuntas a algo, o las instrucciones)
   if(typeof camera !== 'undefined' && typeof pickables !== 'undefined' && pickables.length > 0) {
     fpsRay.setFromCamera(centerNDC, camera);
     fpsRay.far = 10;
     const h = fpsRay.intersectObjects(pickables, false);
-    hoveredId = h.length ? h[0].object.userData.renglon : null;
+    
+    let objAim = h.length ? h[0].object : null;
+    let tagId = objAim && objAim.userData.renglon ? objAim.userData.renglon : null;
 
     const iTag = document.getElementById('i-tag');
     const iDesc = document.getElementById('i-desc');
     const iMeta = document.getElementById('i-meta');
+    const iDoc = document.getElementById('i-doc');
 
-    if(hoveredId && typeof MAP !== 'undefined' && MAP[hoveredId]){
-      if(iTag) iTag.textContent = "Renglón " + hoveredId + "  [T] Viajar · [E] Inspeccionar";
-      if(iDesc) iDesc.textContent = MAP[hoveredId].d;
-      if(iMeta) iMeta.textContent = "Unidad: " + MAP[hoveredId].u + " · Cómputo: " + MAP[hoveredId].q;
+    if (objAim && objAim.userData.esPuerta) {
+      if(iTag) iTag.textContent = "🚪 Puerta interactiva";
+      if(iDesc) iDesc.textContent = "Apunta y toca el botón 🎯 para abrir/cerrar.";
+      if(iMeta) iMeta.textContent = "";
+      if(iDoc) iDoc.style.display = 'none';
+    } else if (tagId && typeof MAP !== 'undefined' && MAP[tagId]) {
+      if(iTag) iTag.textContent = "Renglón " + tagId;
+      if(iDesc) iDesc.textContent = MAP[tagId].d;
+      if(iMeta) iMeta.textContent = "Unidad: " + MAP[tagId].u + " · Cómputo: " + MAP[tagId].q;
+      if(iDoc) iDoc.style.display = MAP[tagId].doc ? 'block' : 'none';
+      if(iDoc && MAP[tagId].doc) iDoc.innerHTML = `<b>ℹ️ Info Técnica:</b><br>${MAP[tagId].doc}`;
     } else {
       if(iTag) iTag.textContent = 'Modo FPS';
-      if(iDesc) iDesc.textContent = 'Mueve el joystick. Apunta a una puerta y toca el botón 📸';
+      if(iDesc) iDesc.textContent = 'Mueve el joystick. Apunta a un equipo o puerta y toca 🎯';
       if(iMeta) iMeta.textContent = '';
+      if(iDoc) iDoc.style.display = 'none';
     }
   }
 }
