@@ -1,4 +1,4 @@
-// main.js - Limpio, sin parches
+// main.js - Versión limpia (sin funciones de parche que fallen)
 const { sala, gab1, gab2, rutaGroup, campoGroup } = buildAll();
 
 setupColliders(RX0, RX1, RZ0, RZ1, RH);
