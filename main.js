@@ -1,9 +1,9 @@
-// main.js - Versión limpia (sin funciones de parche que fallen)
+// main.js - Versión limpia
 const { sala, gab1, gab2, rutaGroup, campoGroup } = buildAll();
 
 setupColliders(RX0, RX1, RZ0, RZ1, RH);
 buildTeleportMenu(CAMS);
-window.cams = CAMS;
+window.cams = CAMS; // Necesario para el menú
 
 buildHUD({ gab1, gab2, rutaGroup, campoGroup });
 buildSidebar();
@@ -44,6 +44,7 @@ function loop(){
 }
 loop();
 
+// Asegura que se ejecute irA una vez cargado el entorno sin detener la consola
 window.addEventListener('load', () => {
   if (typeof irA === 'function') {
     irA('overview');
