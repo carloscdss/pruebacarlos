@@ -177,7 +177,7 @@ function buildSala(){
 function gabinete(x, tipo){
   const g = grupo(x,0,RZ0+0.58);
   
-  // Medidas exactas basadas en la simulación (escala 1 unidad = 1 metro aprox)
+  // Medidas exactas basadas en la simulación
   const W = 0.8, H = 2.0, D = 0.8;
   const zocaloH = 0.13;
 
@@ -190,15 +190,15 @@ function gabinete(x, tipo){
   const yBase = zocaloH;
   // Pared Izquierda
   tag(box(0.04, H, D, M.gabinete, -W/2, yBase + H/2, 0, g), tipo==='a'?"5.1":"6.1");
-  // Pared Derecha (con rejilla)
+  // Pared Derecha
   tag(box(0.04, H, D, M.gabinete, W/2, yBase + H/2, 0, g), tipo==='a'?"5.1":"6.1");
   // Pared Trasera
   tag(box(W, H, 0.04, M.gabinete, 0, yBase + H/2, -D/2, g), tipo==='a'?"5.1":"6.1");
   
-  // 3. REJILLAS DE VENTILACIÓN (En la pared derecha, como en el CSS)
+  // 3. REJILLAS DE VENTILACIÓN (En la pared derecha)
   for(let i=0; i<5; i++){
     const yLouver = yBase + 0.3 + i*0.05;
-    box(0.02, 0.02, 0.2, M.negro, W/2 + 0.01, yLouver, D/2 - 0.15, g); // Lado derecho
+    box(0.02, 0.02, 0.2, M.negro, W/2 + 0.01, yLouver, D/2 - 0.15, g); 
   }
 
   // 4. TECHO (Con Cáncamos de izamiento)
@@ -226,28 +226,24 @@ function gabinete(x, tipo){
   const zFrente = -D/2 + 0.1; 
 
   if(tipo === 'a'){
-    // PLC
     const y = 1.75;
     [y, y-0.5].forEach(yy => {
       tag(box(0.5,0.18,0.12,M.filtro,0,yy,zFrente,g),"5.8");
       for(let i=0;i<5;i++) box(0.08,0.15,0.08, i<2?M.azul:M.verde, -0.2+i*0.1, yy, zFrente+0.04, g);
     });
-    // Módulos E/S
     [["5.12",0.25,M.verde],["5.12",0.15,M.verde],["5.13",0.05,M.ambar],
      ["5.15",-0.05,M.azul],["5.17",-0.15,M.rojo],["5.19",-0.25,M.negro]].forEach(([id,dx,mat]) => {
       tag(box(0.08,0.15,0.08,mat,dx,y-0.5,zFrente,g),id);
     });
-    // Rieles DIN
     [0.5, 0.9, 1.3, 1.7].forEach(yy => box(W-0.15, 0.03, 0.04, M.acero, 0, yy, zFrente-0.02, g));
   } else {
-    // Gabinete 2: Marshalling
     for(let r=0;r<12;r++) for(let i=0;i<6;i++){
       box(0.06,0.06,0.08, r<6?M.azul:M.negro, -0.2+i*0.08, 1.8-r*0.1, zFrente, g);
     }
     for(let yy=0.5; yy<=1.8; yy+=0.2) box(W-0.15, 0.02, 0.03, M.acero, 0, yy, zFrente-0.02, g);
   }
 
-  // 6. PUERTA DELANTERA (Con marco, ventana y cerradura)
+  // 6. PUERTA DELANTERA
   const puertaPivot = new THREE.Group();
   puertaPivot.position.set(-W/2, yBase, D/2); 
   g.add(puertaPivot);
@@ -256,27 +252,22 @@ function gabinete(x, tipo){
   puertaPanel.position.set(W/2, H/2, 0); 
   puertaPivot.add(puertaPanel);
 
-  // Hoja de la puerta (Gradiente simulado con relieve)
   tag(box(W-0.02, H-0.02, 0.04, M.gabinete, 0, 0, 0, puertaPanel), tipo==='a'?"5.1":"6.1");
   box(W-0.06, H-0.06, 0.02, M.pintEp, 0, 0, 0.02, puertaPanel);
   
-  // Ventana de vidrio
   const v = new THREE.Mesh(new THREE.PlaneGeometry(W*0.6, H*0.4), M.vidrio);
   v.position.set(0, H*0.15, 0.032); puertaPanel.add(v);
 
-  // Manilla industrial de palanca (Basada en el CSS)
   const manijaG = grupo(W/2 - 0.07, 0, 0.04, puertaPanel);
-  box(0.04, 0.2, 0.04, M.negro, 0, 0, 0, manijaG); // Caja base
-  box(0.02, 0.1, 0.06, M.acero, 0, 0.05, 0.03, manijaG); // Palanca
+  box(0.04, 0.2, 0.04, M.negro, 0, 0, 0, manijaG);
+  box(0.02, 0.1, 0.06, M.acero, 0, 0.05, 0.03, manijaG);
 
-  // HMI montado en la puerta (Gabinete 1)
   if(tipo === 'a'){
     const hmiGroup = grupo(0, 0.5, 0.04, puertaPanel); 
     tag(box(0.3,0.2,0.03,M.negro,0,0,0,hmiGroup),"5.22");
     const hs = new THREE.Mesh(new THREE.PlaneGeometry(0.24,0.14), M.pantalla);
     hs.position.set(0,0,0.02); hmiGroup.add(hs);
   } else {
-    // Porta-planos en la puerta (Gabinete 2)
     box(0.15, 0.2, 0.02, M.blanco, 0, 0.5, 0.04, puertaPanel);
     box(0.12, 0.03, 0.03, M.acero, 0, 0.62, 0.05, puertaPanel);
   }
@@ -392,4 +383,247 @@ function buildCampo(){
 
   crearPOI(-45, 3, 0, "Captación y Filtración", "El agua del río Sanchón (1050 GPM) es succionada por las bombas G-951 y G-952 hacia los filtros a presión (D-960, D-961). Eliminan sólidos, olores y cloro.");
   crearPOI(-31, 6, 17, "Trenes Desmineralizadores", "El agua pasa por los 3 trenes (M-7451). Catiónico retiene Ca/Mg (H+). Aniónico retiene sulfatos/cloruros (OH-).");
-  crearPOI(-26, 4, 4, "Regeneración Química", "Resinas saturadas se regeneran con H2SO4 (Skid Ácido D-
+  crearPOI(-26, 4, 4, "Regeneración Química", "Resinas saturadas se regeneran con H2SO4 (Skid Ácido D-7456) al 2-8% y Soda Cáustica (M-7451-F5A).");
+  crearPOI(19, 10, 12, "Almacenamiento (33X1/2)", "Agua desmineralizada almacenada en tanques 33X1 y 33X2 (33.000 barriles c/u). Lazo 74LV-52 controla nivel.");
+  crearPOI(25, 3, -2.5, "Distribución y Bombeo", "Bombas G-7451 A/B/C envían agua al Desaereador D-7451, que alimenta las calderas de la refinería.");
+
+  // Skid de Ácido
+  (function(){
+    const g = grupo(-30, 0, 6, campoGroup);
+    const tk = cyl(0.8, 0.8, 3.5, M.acero, 0, 1.8, 0, g, 20); tk.rotation.z = Math.PI/2; tag(tk, "10.25");
+    cyl(0.4, 0.4, 1.5, M.acero, 1.5, 1.8, 1.2, g, 16);
+    tag(box(0.6, 0.5, 0.6, M.ambar, 1.5, 0.25, 0, g), "10.25");
+    const p = rotulo("SKID ÁCIDO (H2SO4)", 1.8, 0.25); p.position.set(0, 3.0, 0); p.rotation.x = -Math.PI/2; g.add(p);
+  })();
+
+  // Skid de Soda
+  (function(){
+    const g = grupo(-22, 0, 6, campoGroup);
+    const tk = cyl(1.0, 1.0, 2.0, M.azul, 0, 1.0, 0, g, 20); tag(tk, "10.26");
+    tag(box(0.6, 0.5, 0.6, M.ambar, 1.5, 0.25, 0, g), "10.26");
+    const p = rotulo("SKID SODA (NaOH)", 1.8, 0.25); p.position.set(0, 2.5, 0); p.rotation.x = -Math.PI/2; g.add(p);
+  })();
+
+  for(let i=0;i<11;i++){
+    const g = grupo(-38+i*2.1,0,0,campoGroup);
+    [-0.45,0.45].forEach(dx => box(0.24,0.95,1.0,M.concreto,dx,0.48,0,g));
+    const c = cyl(0.62,0.62,1.9,M.filtro,0,1.55,0,g,20);
+    c.rotation.z = Math.PI/2; tag(c,"10.1");
+    [-0.95,0.95].forEach(dx => {
+      const s = new THREE.Mesh(new THREE.SphereGeometry(0.62,18,12), M.filtro);
+      s.position.set(dx,1.55,0); g.add(s);
+    });
+    cyl(0.1,0.1,1.2,M.acero,0,2.6,0,g,10);
+    cyl(0.22,0.22,0.12,M.acero,0,2.2,0,g,12);
+    [-0.3,0.3].forEach(dz => {
+      const m = cyl(0.09,0.09,0.06,M.blanco,0.3,2.15,dz,g,14);
+      m.rotation.x = Math.PI/2; tag(m,"10.1");
+      cyl(0.012,0.012,0.35,M.acero,0.3,1.98,dz,g,8);
+    });
+    const orf = cyl(0.24,0.24,0.1,M.acero,-1.15,1.55,0,g,14);
+    orf.rotation.z = Math.PI/2; tag(orf,"10.1");
+    tag(box(0.14,0.14,0.14,M.blanco,-1.15,2.0,0,g),"10.1");
+    const tp = rotulo("D-95"+(i+1),0.42,0.09);
+    tp.position.set(0,1.05,0.67); g.add(tp); tag(tp,"10.17");
+    const cp = cyl(0.11,0.11,1.9,M.acero,0,1.55,0.78,g,10);
+    cp.rotation.z = Math.PI/2;
+  }
+
+  function tanque(x,z,d,h,txt){
+    const g = grupo(x,0,z,campoGroup);
+    cyl(d/2,d/2,h,M.acero,0,h/2+0.3,0,g,26);
+    cyl(d/2+0.08,d/2+0.08,0.3,M.acero,0,0.15,0,g,26);
+    const t = new THREE.Mesh(new THREE.SphereGeometry(d/2,26,10,0,Math.PI*2,0,Math.PI/2.6), M.acero);
+    t.position.set(0,h+0.3,0); t.castShadow = true; g.add(t);
+    for(let i=0;i<Math.floor(h);i++) box(0.5,0.04,0.05,M.galv,d/2+0.18,0.8+i*0.55,0,g);
+    box(0.04,h,0.04,M.galv,d/2+0.18,h/2,-0.28,g);
+    box(0.04,h,0.04,M.galv,d/2+0.18,h/2, 0.28,g);
+    for(let i=0;i<3;i++) tag(cyl(0.05,0.05,1.2,M.vidrio,-d/2-0.12,1.5+i*0.9,0.4,g,8),"10.2");
+    tag(cyl(0.1,0.1,0.22,M.blanco,-d/2-0.16,h*0.8,-0.5,g,12),"10.2");
+    tag(cyl(0.1,0.1,0.22,M.blanco, d/2+0.1,1.2,0.5,g,12),"10.2");
+    tag(cyl(0.11,0.11,0.24,M.blanco,d/2+0.2,1.0,-0.4,g,12),"10.2");
+    for(let i=0;i<3;i++){
+      const m = cyl(0.08,0.08,0.05,M.blanco,-d/2-0.1,2.2+i*0.3,-0.9+i*0.2,g,12);
+      m.rotation.x = Math.PI/2; tag(m,"10.2");
+    }
+    tag(box(0.12,0.16,0.12,M.blanco,d/2+0.14,1.7,0.2,g),"10.2");
+    for(let i=0;i<2;i++){
+      const v = cyl(0.14,0.14,0.24,M.azul,d/2+0.3,1.4,0.4+i*0.9,g,12);
+      v.rotation.z = Math.PI/2; tag(v,"10.2");
+      box(0.2,0.2,0.18,M.negro,d/2+0.3,1.62,0.4+i*0.9,g);
+    }
+    tag(box(0.14,0.14,0.14,M.ambar,-d/2-0.2,1.0,0.7,g),"10.2");
+    const p = rotulo(txt,1.0,0.2); p.position.set(0,h*0.55,d/2+0.06); g.add(p);
+  }
+  tanque(-11,0,6.5,8.5,"F-954");
+  tanque(-3.4,0,6.5,8.5,"F-959");
+  tanque(16,12,5.4,9.5,"T-33X1");
+  tanque(23,12,5.4,9.5,"T-33X2");
+
+  function bomba(x,z,etq,id,grande){
+    const g = grupo(x,0,z,campoGroup);
+    box(grande?2.6:2.0,0.22,1.0,M.concreto,0,0.11,0,g);
+    box(grande?2.4:1.8,0.35,0.85,M.negro,0,0.4,0,g);
+    const v = cyl(0.34,0.34,0.42,M.verde,grande?-0.55:-0.4,0.85,0,g,18);
+    v.rotation.z = Math.PI/2; tag(v,id);
+    cyl(0.16,0.16,0.6,M.acero,grande?-0.55:-0.4,1.2,0,g,12);
+    const mo = cyl(0.3,0.3,0.95,M.azul,grande?0.6:0.45,0.85,0,g,18);
+    mo.rotation.z = Math.PI/2; tag(mo,id);
+    for(let i=0;i<7;i++){
+      const a = cyl(0.33,0.33,0.03,M.azul,grande?0.15+i*0.13:0.05+i*0.11,0.85,0,g,16);
+      a.rotation.z = Math.PI/2;
+    }
+    box(0.24,0.34,0.34,M.ambar,grande?0.1:0.02,0.85,0,g);
+    const s = cyl(0.14,0.14,1.2,M.acero,grande?-1.1:-0.9,0.85,0,g,12);
+    s.rotation.z = Math.PI/2;
+    const m = cyl(0.085,0.085,0.05,M.blanco,grande?-0.55:-0.4,1.55,0.22,g,12);
+    m.rotation.x = Math.PI/2; tag(m,id);
+    tag(box(0.13,0.17,0.13,M.blanco,grande?-0.55:-0.4,1.5,-0.22,g),id);
+    const p = rotulo(etq,0.85,0.18); p.position.set(0,1.95,0); g.add(p);
+  }
+  bomba(7,-2.5,"G-7152-A","10.3",true); bomba(11,-2.5,"G-7152-B","10.3",true);
+  bomba(15,-2.5,"G-7152-C","10.4",false); bomba(19.5,-2.5,"G-953B","10.5",false);
+  bomba(23.5,-2.5,"G-954","10.5",false); bomba(28,-2.5,"G-7154-A","10.6",false);
+  bomba(32,-2.5,"G-7154-B","10.6",false); bomba(36,-2.5,"G-7154-C","10.6",false);
+
+  function interc(x,z,etq,id,anion){
+    const g = grupo(x,0,z,campoGroup);
+    cyl(0.05,0.05,0.5,M.concreto,-0.9,0.25,0,g,8);
+    cyl(0.05,0.05,0.5,M.concreto,0.9,0.25,0,g,8);
+    const mat = anion?M.azul:M.verde;
+    tag(cyl(1.15,1.15,4.6,mat,0,2.8,0,g,24),id);
+    const d = new THREE.Mesh(new THREE.SphereGeometry(1.15,24,12,0,Math.PI*2,0,Math.PI/2), mat);
+    d.position.set(0,5.1,0); d.castShadow = true; g.add(d);
+    cyl(1.15,1.15,0.25,M.acero,0,0.6,0,g,24);
+    const man = cyl(0.09,0.09,3.2,M.acero,0,5.6,0,g,10);
+    man.rotation.z = Math.PI/2;
+    for(let i=0;i<5;i++){
+      tag(box(0.22,0.3,0.22,M.rojo,-1.3+i*0.65,5.6,0,g),id);
+      cyl(0.03,0.03,0.4,M.acero,-1.3+i*0.65,5.9,0,g,8);
+    }
+    for(let i=0;i<3;i++) tag(box(0.15,0.16,0.15,M.ambar,-0.9+i*0.9,4.4,1.2,g),id);
+    tag(box(0.3,0.4,0.24,M.blanco,1.35,2.2,0,g),id);
+    if(anion) tag(box(0.3,0.4,0.24,M.blanco,1.35,1.5,0,g),id);
+    tag(cyl(0.1,0.1,0.2,M.blanco,-1.4,2.0,0.6,g,12),id);
+    for(let i=0;i<2;i++){
+      const m = cyl(0.08,0.08,0.05,M.blanco,1.2,3.2+i*0.5,0.7,g,12);
+      m.rotation.x = Math.PI/2; tag(m,id);
+    }
+    tag(box(0.12,0.18,0.12,M.blanco,-1.2,3.4,-0.7,g),id);
+    for(let i=0;i<8;i++) box(0.45,0.04,0.05,M.galv,0,0.8+i*0.55,1.28,g);
+    box(0.04,4.4,0.04,M.galv,-0.24,2.8,1.28,g); box(0.04,4.4,0.04,M.galv,0.24,2.8,1.28,g);
+    const p = rotulo(etq,1.1,0.22); p.position.set(0,3.9,1.18); g.add(p);
+  }
+  interc(-38,13,"M-7451-F1","10.7",false);
+  interc(-31,13,"M-7451-F2","10.8",false);
+  interc(-24,13,"M-7451-F3","10.9",false);
+  interc(-38,21.5,"M-7451-F4","10.10",true);
+  interc(-31,21.5,"M-7451-F5","10.11",true);
+  interc(-24,21.5,"M-7451-F6","10.12",true);
+
+  [[-14.5,-3.5],[-6,-3.5],[4,6.5],[26,6.5]].forEach(([x,z]) => {
+    const g = grupo(x,0,z,campoGroup);
+    cyl(0.06,0.06,1.4,M.inox,0,0.7,0,g,10);
+    tag(box(0.5,0.6,0.3,M.inoxP,0,1.55,0,g),"10.15");
+    box(0.02,0.5,0.24,M.blanco,0.26,1.55,0,g);
+  });
+
+  [[-20,3.2],[-13,3.2]].forEach(([x,z]) => {
+    const g = grupo(x,0,z,campoGroup);
+    const c = cyl(0.3,0.3,0.7,M.acero,0,0.9,0,g,16); c.rotation.z = Math.PI/2;
+    cyl(0.14,0.14,0.3,M.azul,0,1.3,0,g,12);
+    tag(box(0.3,0.34,0.22,M.blanco,0.42,1.15,0,g),"10.14");
+    box(0.26,0.2,0.02,M.pantalla,0.42,1.15,0.12,g);
+    const p = rotulo("74FT572",0.8,0.16); p.position.set(0,1.75,0); g.add(p);
+  });
+
+  (function(){
+    const g = grupo(-6.5,0,-6.5,campoGroup);
+    box(0.95,0.1,0.95,M.concreto,0,0.05,0,g);
+    cyl(0.11,0.11,1.0,M.inoxP,-0.3,0.55,0,g,12);
+    cyl(0.11,0.11,1.0,M.inoxP, 0.3,0.55,0,g,12);
+    tag(box(0.98,1.18,0.46,M.inoxP,0,1.68,0,g),"8.1");
+    box(0.88,1.06,0.02,M.inox,0,1.68,0.24,g);
+    tag(box(1.18,0.05,0.68,M.inoxP,0,2.34,0.06,g),"8.2");
+    box(1.18,0.12,0.05,M.inoxP,0,2.28,0.38,g);
+    tag(box(0.36,0.42,0.18,M.inoxP,0,2.04,-0.32,g),"8.3");
+    box(0.28,0.06,0.02,M.negro,0,1.94,-0.41,g);
+    tag(box(0.05,0.3,0.04,M.cobre,-0.4,1.55,-0.17,g),"8.5");
+    tag(box(0.05,0.3,0.04,M.cobre,-0.4,1.18,-0.17,g),"8.6");
+    tag(box(0.04,0.5,0.03,M.cable,-0.44,1.35,-0.19,g),"8.7");
+
+    const g8 = grupo(0,0,0,g);
+    for(let i=0;i<12;i++){
+      const x = -0.36+(i%6)*0.145, y = 2.02-Math.floor(i/6)*0.24;
+      const b = cyl(0.042,0.042,0.05, i%2?M.verde:M.rojo, x,y,0.27,g8,12);
+      b.rotation.x = Math.PI/2;
+    }
+    tag(g8,"8.8");
+    const g9 = grupo(0,0,0,g);
+    for(let i=0;i<6;i++){
+      const x = -0.32+i*0.13;
+      const s = cyl(0.045,0.045,0.05,M.negro,x,1.48,0.27,g9,12);
+      s.rotation.x = Math.PI/2;
+      box(0.025,0.06,0.02,M.blanco,x,1.5,0.3,g9);
+    }
+    tag(g9,"8.9");
+    const g10 = grupo(0,0,0,g);
+    const cols = [M.ledV,M.ledR,M.ledA];
+    for(let i=0;i<18;i++){
+      const x = -0.36+(i%6)*0.145, y = 1.26-Math.floor(i/6)*0.11;
+      const l = cyl(0.03,0.03,0.04,cols[i%3],x,y,0.27,g10,10);
+      l.rotation.x = Math.PI/2;
+    }
+    tag(g10,"8.10");
+    const g11 = grupo(0,0,0,g);
+    [[-0.36,0.98],[0.36,0.98]].forEach(([x,y]) => {
+      const a = cyl(0.06,0.06,0.07,M.ambar,x,y,0.28,g11,14); a.rotation.x = Math.PI/2;
+      const b = cyl(0.075,0.075,0.05,M.rojo,x,y,0.32,g11,16); b.rotation.x = Math.PI/2;
+    });
+    tag(g11,"8.11");
+    tag(box(0.6,0.12,0.08,M.negro,0,1.02,-0.13,g),"8.12");
+    const p = rotulo("PANEL DE CAMPO",0.7,0.16); p.position.set(0,2.48,0); g.add(p);
+  })();
+
+  for(let i=0;i<14;i++){
+    const c = new THREE.Mesh(new THREE.TorusGeometry(0.25,0.014,6,14,Math.PI), M.acero);
+    c.position.set(-16+i*1.4,0.35,3.6); c.rotation.z = Math.PI;
+    campoGroup.add(c); tag(c,"10.16");
+  }
+
+  (function(){
+    const g = grupo(6.8,0,27.6,campoGroup);
+    cyl(0.05,0.05,7,M.galv,0,3.5,0,g,8);
+    cyl(0.03,0.03,1.2,M.cobre,0,7.4,0,g,8);
+    box(0.3,0.06,0.3,M.galv,0,0.03,0,g);
+    tag(g,"4.14");
+  })();
+
+  return campoGroup;
+}
+
+function buildAll(){
+  buildTerreno();
+  const sala = buildSala();
+  const { gab1, gab2 } = buildGabinetes(sala);
+  const rutaGroup = buildRuta();
+  const campoGroup = buildCampo();
+  return { sala, gab1, gab2, rutaGroup, campoGroup };
+}
+
+function animarPuertas(dt) {
+  const velocidad = 3.0;
+  const maxAngulo = -Math.PI / 2.2;
+  
+  ['gab1', 'gab2'].forEach(key => {
+    const pivot = puertas[key];
+    if(!pivot) return;
+    const objetivo = estadoPuertas[key] ? maxAngulo : 0;
+    const actual = pivot.rotation.y;
+    if(Math.abs(objetivo - actual) > 0.001) {
+      pivot.rotation.y += Math.sign(objetivo - actual) * velocidad * dt;
+      if(estadoPuertas[key] && pivot.rotation.y < maxAngulo) pivot.rotation.y = maxAngulo;
+      if(!estadoPuertas[key] && pivot.rotation.y > 0) pivot.rotation.y = 0;
+    }
+  });
+}
