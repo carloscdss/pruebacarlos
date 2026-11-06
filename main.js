@@ -42,4 +42,10 @@ function loop(){
   renderer.render(scene, camera);
 }
 loop();
-irA('overview');
+
+// Asegura que se ejecute irA una vez cargado el entorno sin detener la consola
+window.addEventListener('load', () => {
+  if (typeof irA === 'function') {
+    irA('overview');
+  }
+});
