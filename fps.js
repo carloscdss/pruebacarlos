@@ -29,7 +29,11 @@ const knob = document.getElementById('joystick-knob');
 const joyZone = document.getElementById('joystick-zone');
 
 const colliders = [];
-function addCollider(minX, maxX, minZ, maxZ, minY, maxY){ colliders.push({minX,maxX,minZ,maxZ,minY,maxY}); }
+
+function addCollider(minX, maxX, minZ, maxZ, minY, maxY){ 
+  colliders.push({minX,maxX,minZ,maxZ,minY,maxY}); 
+}
+
 function setupColliders(RX0,RX1,RZ0,RZ1,RH){
   addCollider(RX0-0.3, RX0, RZ0-0.3, RZ1+0.3, 0, RH);
   addCollider(RX1, RX1+0.3, RZ0-0.3, RZ1+0.3, 0, RH);
@@ -119,15 +123,28 @@ document.addEventListener('keydown', e => {
   if(e.code === 'KeyT' && fpsMode.value) viajarAObjetoAim();
   if(e.code === 'KeyM' && fpsMode.value && teleportMenu) teleportMenu.classList.toggle('visible');
 });
-document.addEventListener('keyup', e => { keys[e.code] = false; });
+
+document.addEventListener('keyup', e => { 
+  keys[e.code] = false; 
+});
 
 let isDragging = false, lastMouseX = 0, lastMouseY = 0;
 const mouseSensitivity = 0.005;
 
 if(typeof renderer !== 'undefined' && renderer && renderer.domElement) {
-  renderer.domElement.addEventListener('mousedown', e => { if(fpsMode.value) { isDragging = true; lastMouseX = e.clientX; lastMouseY = e.clientY; } });
+  renderer.domElement.addEventListener('mousedown', e => { 
+    if(fpsMode.value) { 
+      isDragging = true; 
+      lastMouseX = e.clientX; 
+      lastMouseY = e.clientY; 
+    } 
+  });
 }
-document.addEventListener('mouseup', () => { isDragging = false; });
+
+document.addEventListener('mouseup', () => { 
+  isDragging = false; 
+});
+
 document.addEventListener('mousemove', e => {
   if(!fpsMode.value || !isDragging) return;
   player.yaw -= (e.clientX - lastMouseX) * mouseSensitivity;
