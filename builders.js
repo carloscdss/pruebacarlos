@@ -26,7 +26,7 @@ function buildSala(){
   const piso = new THREE.Mesh(new THREE.PlaneGeometry(10,6), M.epoxi);
   piso.rotation.x = -Math.PI/2; piso.position.set(0,0.06,25); piso.receiveShadow = true;
   tag(piso,"4.2"); med("4.2",30); sala.add(piso);
-  box(10.4,0.06,6.4,M.concreto,0,0.03,25,sala);
+  // box(10.4,0.06,6.4,M.concreto,0,0.03,25,sala);
 
   box(10.7,0.3,6.7,M.techo,0,RH+0.15,25,sala);
   const muro = (w,d,x,z) => box(w,RH,d,M.pared,x,RH/2+0.06,z,sala);
